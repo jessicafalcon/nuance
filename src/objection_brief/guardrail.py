@@ -6,13 +6,12 @@ import re
 from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
-from enum import StrEnum
 
 from objection_brief import config
-from objection_brief.detect import Detection, Speaker
+from objection_brief.detect import Detection, RejectReason, Speaker
 from objection_brief.weaknesses import Theme
 
-__all__ = ["RejectReason", "Verdict", "check", "count_rejections", "normalize"]
+__all__ = ["Verdict", "check", "count_rejections", "normalize"]
 
 # Typographic quotes become their ASCII forms, so a quote matches whether the model or
 # the transcript uses curly or straight ones.
@@ -30,17 +29,6 @@ _QUOTES = str.maketrans(
 )
 # Compared after `normalize`, so the label matches in any case.
 _PROSPECT_LABEL = "prospect:"
-
-
-class RejectReason(StrEnum):
-    """Why the guardrail rejected a detection; stored as the log's `reject_reason`."""
-
-    QUOTE_NOT_FOUND = "quote_not_found"
-    SPEAKER_NOT_PROSPECT = "speaker_not_prospect"
-    QUOTE_NOT_PROSPECT = "quote_not_prospect"
-    INVALID_CONFIDENCE = "invalid_confidence"
-    LOW_CONFIDENCE = "low_confidence"
-    UNKNOWN_THEME = "unknown_theme"
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,7 +64,8 @@ def check(
 ) -> tuple[Verdict, ...]:
     """Return one verdict per detection, in order, named by the first check that fails.
 
-    The checks run in the order of `RejectReason`. A quote must start and end on word
+    The checks run in the order of `RejectReason`, after `MALFORMED_DETECTION`, which
+    `detect` sets. A quote must start and end on word
     boundaries and sit inside one `PROSPECT:` turn as well as in the transcript, so a
     rep's words the model labels as the prospect's are rejected (`QUOTE_NOT_PROSPECT`),
     as is a quote that spans two turns.
