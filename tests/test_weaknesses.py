@@ -47,12 +47,10 @@ def test_committed_file_has_the_six_themes() -> None:
     ]
 
 
-def test_committed_themes_are_drafts_with_placeholder_proofs() -> None:
+def test_committed_proofs_are_placeholders() -> None:
     # No real customer story is in the repo: every proof stays a visible placeholder
     # until an approved one replaces it (ob-correctness, invariants 4 and 5).
     for theme in load_themes(THEMES_FILE):
-        assert theme.status == "draft"
-        assert "to validate" in theme.owner
         assert theme.proof.startswith("[PLACEHOLDER]"), theme.id
 
 

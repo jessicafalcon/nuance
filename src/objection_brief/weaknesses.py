@@ -71,30 +71,34 @@ def _parse_theme(entry: object, source: str, position: int) -> Theme:
     if not isinstance(entry, dict):
         raise WeaknessesError(f"{where}: expected a mapping of fields")
     raw = cast("dict[object, object]", entry)
-    # Name the theme by its id as soon as the id is usable, so later errors point at it.
-    if "id" in raw:
-        theme_id = _text(raw["id"], where, "id")
-        if not _ID_PATTERN.fullmatch(theme_id):
-            raise WeaknessesError(f"{where}: field 'id' must match {_ID_PATTERN.pattern}")
-        where = f"{source}: theme {theme_id!r}"
+    if "id" not in raw:
+        raise WeaknessesError(f"{where}: missing field 'id'")
+    theme_id = _text(raw["id"], where, "id")
+    if not _ID_PATTERN.fullmatch(theme_id):
+        raise WeaknessesError(f"{where}: field 'id' must match {_ID_PATTERN.pattern}")
+    # From here on, errors name the theme by its id rather than its position.
+    where = f"{source}: theme {theme_id!r}"
 
-    unknown = sorted(str(key) for key in raw if key not in _FIELDS)
-    if unknown:
-        raise WeaknessesError(f"{where}: unknown field {unknown[0]!r}")
-    missing = [name for name in _FIELDS if name not in raw]
-    if missing:
-        raise WeaknessesError(f"{where}: missing field {missing[0]!r}")
+    unknown = next((key for key in raw if key not in _FIELDS), None)
+    if unknown is not None:
+        raise WeaknessesError(f"{where}: unknown field {str(unknown)!r}")
+    missing = next((name for name in _FIELDS if name not in raw), None)
+    if missing is not None:
+        raise WeaknessesError(f"{where}: missing field {missing!r}")
+
+    def text(name: str) -> str:
+        return _text(raw[name], where, name)
 
     theme = Theme(
-        id=_text(raw["id"], where, "id"),
-        label=_text(raw["label"], where, "label"),
-        detect_when=_text(raw["detect_when"], where, "detect_when"),
+        id=theme_id,
+        label=text("label"),
+        detect_when=text("detect_when"),
         example_signals=_signals(raw["example_signals"], where),
-        draft_answer=_text(raw["draft_answer"], where, "draft_answer"),
-        proof=_text(raw["proof"], where, "proof"),
-        follow_up_angle=_text(raw["follow_up_angle"], where, "follow_up_angle"),
-        status=_text(raw["status"], where, "status"),
-        owner=_text(raw["owner"], where, "owner"),
+        draft_answer=text("draft_answer"),
+        proof=text("proof"),
+        follow_up_angle=text("follow_up_angle"),
+        status=text("status"),
+        owner=text("owner"),
     )
     if theme.status != _REQUIRED_STATUS:
         raise WeaknessesError(f"{where}: field 'status' must be {_REQUIRED_STATUS!r}")
