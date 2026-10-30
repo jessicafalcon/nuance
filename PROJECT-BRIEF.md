@@ -122,7 +122,7 @@ Validation: unique `id`s in lowercase snake_case (they become schema enum values
 
 ### 6.2 `data/transcripts/`
 
-~12 short synthetic snippets (300–1,200 words each), fictional companies and people, speakers labelled `REP:` and `PROSPECT:`.
+~12 short synthetic snippets (300–1,200 words each), fictional companies and people, one speaker turn per line, labelled `REP:` or `PROSPECT:` (the guardrail reads a prospect turn as one `PROSPECT:` line, §7.2).
 - 8 positives covering all six themes (some transcripts contain two objections)
 - 4 negatives: price mentioned positively, a competitor mentioned without an objection, an objection raised by the rep (not the prospect), and a call with no objection at all
 
@@ -154,11 +154,12 @@ t09_no_objection: []
 - Return token usage alongside results (for cost reporting).
 
 ### 7.2 Guardrail
-Keep a detection only if all are true:
-- `quote` appears in the transcript after normalising whitespace, quotes and case
-- `speaker == "prospect"`
-- `confidence >= 0.6` (configurable)
-- `theme_id` exists in `weaknesses.yaml`
+Keep a detection only if all are true. A rejection carries the `RejectReason` of the first check that fails, in this order:
+- `quote` appears in the transcript after normalising whitespace, quotes and case, starting and ending on word boundaries (`quote_not_found`; an empty quote fails too)
+- `speaker == "prospect"` (`speaker_not_prospect`)
+- `quote` sits inside a single `PROSPECT:` turn, with the same normalisation and boundaries (`quote_not_prospect`), so a rep's words labelled as the prospect's, or a quote spanning two turns, fail
+- `confidence` is in [0, 1], so NaN fails (`invalid_confidence`), and `>= config.min_confidence`, 0.6 (`low_confidence`); that it is a number is checked when `detect` parses the tool output
+- `theme_id` exists in `weaknesses.yaml` (`unknown_theme`)
 
 Count and report rejections by reason.
 
@@ -221,7 +222,7 @@ Note in the README that the test set is small and synthetic, so the numbers show
 
 ## 10. Tests (pytest)
 
-- `test_guardrail.py`: verbatim match with whitespace/case differences passes; paraphrased quote fails; rep speaker fails; low confidence fails; unknown theme fails
+- `test_guardrail.py`: verbatim match with whitespace/case differences passes; paraphrased quote fails; a quote cut inside a word fails; rep speaker fails; a quote found only on a `REP:` line, or spanning two turns, fails; low confidence fails; unknown theme fails
 - `test_weaknesses.py`: YAML loads, ids unique, required fields present; each §6.1 validation rule fails with the theme and field named
 - `test_brief.py`: Block Kit JSON has the five elements and the draft footer
 
@@ -251,7 +252,7 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 - [x] 1. Scaffold repo, `pyproject.toml`, `.env.example`, `.gitignore`, `CLAUDE.md`, security hooks, CI → **checkpoint:** `uv run pytest` runs (only the hook tests so far)
 - [x] 2. `weaknesses.yaml` + loader + `test_weaknesses.py` → **checkpoint:** tests pass
 - [x] 3. Synthetic transcripts + `labels.yaml` → **checkpoint:** I review them before continuing
-- [ ] 4. `guardrail.py` + tests → **checkpoint:** tests pass
+- [x] 4. `guardrail.py` + tests → **checkpoint:** tests pass
 - [ ] 5. `llm.py` (with the replay cache, §7.6) + `detect.py` → **checkpoint:** run live on 2 transcripts, inspect raw JSON, commit their cache entries; the same run with `--offline` makes no call
 - [ ] 6. `brief.py`, `notify.py`, `log.py` + tests → **checkpoint:** `run-all` produces briefs in `out/briefs/`; the cache covers every transcript and `test_pipeline.py` replays `run-all --offline`
 - [ ] 7. `eval` for both models → **checkpoint:** `reports/eval_<model>.md` committed for both; `test_pipeline.py` regenerates them offline and they match
@@ -288,3 +289,5 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 | Python 3.12 | Within §4's 3.11+; the version CI tests |
 | Documents state each fact once and point to its owner; `docs-guard` checks the facts that must repeat (build-step state, pinned uv and gitleaks versions, the CLAUDE.md tool tables) after an edit to a record, a hook or a pinned config, and at every commit and PR | A rule restated in several documents drifted when only one was updated; a deterministic check runs everywhere at no model cost, and prose that restates a rule is left to review |
 | Theme validation is stricter than unique ids, all fields and `status: draft`: ids are lowercase snake_case, no field is empty, unknown or repeated, and `owner` contains "to validate" (§6.1) | Ids become schema enum values and log columns; a misspelled or pasted field would otherwise be ignored or silently replace the approved answer; the owner marker keeps every answer visibly unapproved |
+| The guardrail also requires the quote to sit inside one `PROSPECT:` turn, with its own reason `quote_not_prospect`; a confidence outside [0, 1] is `invalid_confidence` (§7.2) | The speaker field is the model's claim: a rep line close to a theme's example signals (t11) would otherwise pass if mislabelled. A separate reason keeps misattributions apart from paraphrases in the log |
+| A quote matches only on word boundaries (§7.2) | A plain substring test kept "complicated" from "uncomplicated", reversing what the prospect said; boundaries make the match stricter, never fuzzier |

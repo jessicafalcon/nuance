@@ -58,4 +58,6 @@ max-line-length = 120
 [tool.pyright]
 include = ["src", "tests", ".claude/hooks"]
 strict = ["src"]
-extraPaths = [".claude/hooks"]
+# `src` is listed because setting extraPaths drops pyright's automatic `src` entry, and
+# the package would then resolve through the editable install as an untyped library.
+extraPaths = ["src", ".claude/hooks"]
