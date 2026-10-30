@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from objection_brief import config
 from objection_brief.detect import Detection
-from objection_brief.guardrail import Verdict
+from objection_brief.guardrail import Verdict, normalize
 from objection_brief.llm import JSON, ModelCall, Usage
 from objection_brief.weaknesses import Theme
 
@@ -33,9 +33,6 @@ FOOTER = "Draft answer \N{EM DASH} review before using."
 # Slack's limit on a section's text; the header's is 150 (Block Kit reference).
 _TEXT_LIMIT = 3000
 _HEADER_LIMIT = 150
-# Proofs keep this marker until a real, approved story replaces them (ob-correctness,
-# invariant 4), so a draft that drops it would pass a placeholder off as a fact.
-_PLACEHOLDER = "[PLACEHOLDER]"
 # Figures written in digits. A figure spelled out in words is left to the prompt.
 _NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
 
@@ -78,11 +75,13 @@ Rules:
 no greeting, sign-off or subject line.
 - Acknowledge the concern in the quote, then give the answer, the proof and the next step.
 - Add no fact, figure, date, name, customer, feature or promise that is not in the \
-approved points or the quote.
+approved points or the quote. Propose no day, date, time or deadline: offer the next \
+step without saying when.
 - Write every number exactly as the approved points or the quote write it, in words \
 or in digits.
-- Copy the proof as written. If it contains [PLACEHOLDER], keep that marker and the \
-words after it unchanged, so the account executive sees it must be replaced."""
+- Copy the proof once, word for word, as one unit that starts with its first word. \
+Do not reword it or move its words before or after a [PLACEHOLDER] marker, so the \
+account executive sees what must be replaced."""
 
 
 def select(verdicts: Iterable[Verdict]) -> tuple[Detection, ...]:
@@ -156,8 +155,11 @@ def grounding_problem(text: str, theme: Theme, quote: str) -> str | None:
     """Name the first grounding check a draft fails, or return `None` when it passes."""
     if not text:
         return "the draft is empty"
-    if _PLACEHOLDER in theme.proof and _PLACEHOLDER not in text:
-        return f"the draft dropped the {_PLACEHOLDER} marker from the proof"
+    # Proofs stay marked [PLACEHOLDER] until an approved story replaces them
+    # (ob-correctness, invariant 4); a reworded proof could pass one off as a fact.
+    # Folded as the guardrail folds a quote, so only case, spacing and quote marks may differ.
+    if normalize(theme.proof) not in normalize(text):
+        return "the draft doesn't copy the proof word for word"
     allowed = set(
         _NUMBER.findall(" ".join((theme.draft_answer, theme.proof, theme.follow_up_angle, quote)))
     )

@@ -126,7 +126,15 @@ def test_quote_goes_only_in_the_user_turn() -> None:
         (DRAFT, "max_tokens", "stopped with 'max_tokens'"),
         (DRAFT, "refusal", "stopped with 'refusal'"),
         ("   ", "end_turn", "the draft is empty"),
-        (DRAFT.replace("[PLACEHOLDER] ", ""), "end_turn", "dropped the [PLACEHOLDER] marker"),
+        (DRAFT.replace("[PLACEHOLDER] ", ""), "end_turn", "doesn't copy the proof word for word"),
+        (
+            DRAFT.replace(
+                "[PLACEHOLDER] customer story: mid-market company scoped cost-center access",
+                "A mid-market company scoped cost-center access: [PLACEHOLDER] customer story",
+            ),
+            "end_turn",
+            "doesn't copy the proof word for word",
+        ),
         (DRAFT + " Teams cut setup time by 40%.", "end_turn", "states '40'"),
     ],
 )

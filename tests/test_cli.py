@@ -22,7 +22,8 @@ T01_QUOTE = (
 )
 FOLLOW_UP = (
     "Scoping access for fifty budget owners does take deliberate setup. [PLACEHOLDER] customer "
-    "story. Could we book a 30-minute permissions design session?"
+    "story: mid-market company scoped cost-center access in onboarding. Could we book a "
+    "30-minute permissions design session?"
 )
 
 

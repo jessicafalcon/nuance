@@ -47,7 +47,7 @@ detect_max_tokens: Final = 16000
 # The follow-up paragraph (brief §7.3): the smaller model, as for detection. Bump the
 # version on any change to the follow-up prompt's text (brief §7.6).
 follow_up_model: Final = "claude-haiku-5-5"
-follow_up_prompt_version: Final = "follow-up-v1"
+follow_up_prompt_version: Final = "follow-up-v2"
 follow_up_effort: Final = "low"
 follow_up_max_tokens: Final = 4000
 
