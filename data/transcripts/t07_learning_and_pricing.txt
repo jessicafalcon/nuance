@@ -1,0 +1,49 @@
+REP: Hi Femi, thanks for joining. And I think Claire from the trust's central team is with us too?
+
+PROSPECT: Yes, Claire's here. She manages the budget process for all the schools.
+
+REP: Welcome, Claire. To set the scene: Wendlecote Schools Trust has twenty-two schools, each with its own budget, and the central team consolidates them for the trustees. Today that's a workbook per school.
+
+PROSPECT: That's right. And it's getting harder every year. We took on three new schools last year and two more are joining in September.
+
+REP: In our last call you said the goal was to get headteachers more involved in their own budgets.
+
+PROSPECT: That's the goal. The trustees want headteachers to own their numbers, not just sign off what we send them.
+
+REP: How involved are they today?
+
+PROSPECT: Not very. Claire's team builds each school's budget, and the head reviews it in a meeting. Some heads are very engaged, some barely look at it.
+
+REP: So the question is whether headteachers can work in the tool directly.
+
+PROSPECT: That's the question, and I'm sceptical. Our headteachers are not finance people, and I can't see them building or changing a model without someone holding their hand.
+
+REP: That's a fair concern. What would a headteacher actually need to do in a typical month?
+
+PROSPECT: Check staffing costs, update the supply teacher spend, and look at the variance on premises. A few of them would want to try a scenario, like adding a teaching assistant.
+
+REP: That's helpful. Building and changing the model would stay with Claire's team, and I'll be honest that there's a learning curve for that, which onboarding covers with admin training. Headteachers would get an input view: their school, a few lines to update, and a simple way to try a scenario like the teaching assistant. They wouldn't be designing anything.
+
+PROSPECT: Claire wants to know if the heads could add their own lines, like a new club or a trip.
+
+REP: That would be a routine change Claire's team makes, not something we'd need to do for you. I'd suggest we test it properly: a hands-on session where two of your headteachers complete a real input task in a sandbox.
+
+PROSPECT: That would be useful. We'd pick one confident head and one who isn't.
+
+REP: That's the right mix. Anything else on your mind?
+
+PROSPECT: Yes, the cost. I'll be honest, this is where the trustees will push. If all twenty-two headteachers need a licence, the cost goes up every time we open or take on a school.
+
+REP: That's a reasonable worry, especially with schools joining every year. Headteachers who update a few lines a month wouldn't need a full seat. They'd be contributor seats, which cost much less. Only Claire's team would need full seats.
+
+PROSPECT: And at renewal? We're a charity. A big jump at renewal would be very hard to explain to the trustees.
+
+REP: Understood. On a multi-year term, the annual increase can be capped in the contract. I'd suggest I send you a three-year cost model at your expected mix, with the renewal cap options side by side, including the schools joining in September.
+
+PROSPECT: Please do. Claire can give you the expected numbers.
+
+REP: Thank you. I'll send a short list of what I need. And I'll set up the sandbox session for two headteachers in the next couple of weeks.
+
+PROSPECT: Good. Thanks for your time.
+
+REP: Thank you both.

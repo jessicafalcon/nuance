@@ -1,0 +1,59 @@
+REP: Thanks for making the time, Dana. Last week you walked me through how budgeting works at Halden Outdoor today, so I'd like to use this call to go deeper on the setup side. Is that still a good plan?
+
+PROSPECT: Yes, that works. I've got about forty minutes. Our controller, Wes, might join halfway through.
+
+REP: Great. To recap what I heard: you have forty-one stores across five regions, each store manager owns a budget, and the regional directors roll those up. Today it all lives in one big workbook that your team consolidates by hand.
+
+PROSPECT: That's right. Plus the head office departments, so it's closer to fifty budget owners in total. Marketing, logistics, IT, and so on.
+
+REP: And the main goal is to stop emailing the workbook around and get everyone entering numbers in one place.
+
+PROSPECT: Exactly. The emailing is the part that breaks. Someone saves over a tab, or sends last month's version back, and we lose a day finding out what changed.
+
+REP: That's a very common starting point. In the demo you saw how a store manager gets an input view with only their lines on it, and the regional director sees the roll-up with comments from each store.
+
+PROSPECT: The demo looked good. I'll be honest about where I'm stuck, though.
+
+REP: Please.
+
+PROSPECT: Honestly, setting up permissions so each of our fifty budget owners only sees their own cost center sounds like a project in itself.
+
+REP: That's a fair concern. Can you tell me a bit more about what makes it feel big?
+
+PROSPECT: It's not just the stores. Some regional directors also own a head office budget, two of our managers cover two stores each, and the board wants a version where store-level salaries are hidden. Every time I picture mapping all of that, I see weeks of work.
+
+REP: Understood. And who would own that mapping on your side today?
+
+PROSPECT: Probably me and one analyst. We don't have a dedicated systems person in finance.
+
+REP: Okay. I won't pretend granular permissions are zero effort. They take deliberate setup, and the structure you just described is more layered than most. What we do is start from role-based templates, so a store manager, a regional director and a department head each get a standard role, and then we only handle the exceptions by hand. Onboarding also includes a guided permissions session with one of our solutions consultants, where you map the roles together.
+
+PROSPECT: That helps for the first setup. My bigger worry is what happens after.
+
+REP: Go on.
+
+PROSPECT: We reorganize the regions almost every year, and I don't want to open a ticket with your team every time someone changes who they report to.
+
+REP: That makes sense. The intent is that your admin makes those changes, not us. Moving a store from one region to another should be an update to the hierarchy, and the role follows it. I'd want to show you that rather than just tell you.
+
+PROSPECT: I'd like to see it, yes. Especially the two-store managers. That's the case that always breaks in our workbook.
+
+REP: Noted. Here's what I'd suggest: a thirty-minute permissions design session with our solutions consultant, Ines. You bring your current org chart and the list of exceptions, and she sketches how the roles would map, including the hidden-salary version for the board.
+
+PROSPECT: Can Wes join that one? He knows the exceptions better than I do.
+
+REP: Of course. Should I send a few times for next week?
+
+PROSPECT: Please. Tuesday or Thursday afternoon is best for both of us.
+
+REP: I'll send options for both. Anything else you'd want covered in that session?
+
+PROSPECT: How we'd test it. Before we roll it out to fifty people, I want to log in as a store manager and check they can't see the store next door.
+
+REP: That's a good test, and the admin can view the system as any role, so you can check it yourself before anyone else gets access. I'll ask Ines to include that in the session.
+
+PROSPECT: Good. Then I think that's the main thing for today.
+
+REP: Thanks, Dana. I'll send the invite this afternoon with a short agenda, and I'll include the list of what to bring.
+
+PROSPECT: Thanks. Talk next week.

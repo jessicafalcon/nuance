@@ -250,7 +250,7 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 
 - [x] 1. Scaffold repo, `pyproject.toml`, `.env.example`, `.gitignore`, `CLAUDE.md`, security hooks, CI → **checkpoint:** `uv run pytest` runs (only the hook tests so far)
 - [x] 2. `weaknesses.yaml` + loader + `test_weaknesses.py` → **checkpoint:** tests pass
-- [ ] 3. Synthetic transcripts + `labels.yaml` → **checkpoint:** I review them before continuing
+- [x] 3. Synthetic transcripts + `labels.yaml` → **checkpoint:** I review them before continuing
 - [ ] 4. `guardrail.py` + tests → **checkpoint:** tests pass
 - [ ] 5. `llm.py` (with the replay cache, §7.6) + `detect.py` → **checkpoint:** run live on 2 transcripts, inspect raw JSON, commit their cache entries; the same run with `--offline` makes no call
 - [ ] 6. `brief.py`, `notify.py`, `log.py` + tests → **checkpoint:** `run-all` produces briefs in `out/briefs/`; the cache covers every transcript and `test_pipeline.py` replays `run-all --offline`

@@ -1,0 +1,57 @@
+REP: Hi Alan, thanks for getting back to me so quickly on the proposal.
+
+PROSPECT: No problem. I wanted to move before the procurement window closes at the end of the month.
+
+REP: That's helpful to know. Where did you and the team land?
+
+PROSPECT: Good news, mostly. To be honest, the pricing came in below what we'd budgeted for this year.
+
+REP: That's good to hear. What had you budgeted against?
+
+PROSPECT: We'd assumed full seats for everyone, so we'd set aside more. The contributor seats are a nice touch, since most of our brewery managers only enter numbers once a month.
+
+REP: That's how most teams use them. Glenhallow has, what, nine breweries?
+
+PROSPECT: Nine breweries and the head office. So ten budget owners on contributor seats, and four of us in finance on full seats.
+
+REP: That matches the proposal. And the three-year term?
+
+PROSPECT: The three-year term with the capped annual increase is exactly what procurement asked for. They were pleased to see it written into the order form.
+
+REP: Great. So the commercial side looks settled. What's left before you can sign?
+
+PROSPECT: Two things. Our IT lead wants to review the security documentation, and I need to confirm the implementation dates with my team.
+
+REP: I'll send the security pack today. It includes the questionnaire answers we've already prepared for other customers, so it should save your IT lead some time.
+
+PROSPECT: Thanks. He's thorough, so expect a few follow-up questions.
+
+REP: That's fine. Who should those go to on our side?
+
+PROSPECT: Send me the contact and I'll introduce them.
+
+REP: Will do. On implementation, the plan we discussed was to start in the second week of next month and go live with the budget cycle in January.
+
+PROSPECT: That still works. The only constraint is that my analyst, Kofi, is on leave for a week in the middle.
+
+REP: We can plan around that. The first two weeks are mostly model design workshops, so we'd want Kofi there for those. The data load can happen while he's away.
+
+PROSPECT: That makes sense. I'll send you his dates.
+
+REP: Thank you. And who will be the admin on your side once we go live?
+
+PROSPECT: Kofi. He built our current budget workbook, so he knows where all the bodies are buried.
+
+REP: Then he'll be a good admin. The admin training is part of onboarding, so he'll do that in the first month.
+
+PROSPECT: Good. Is there anything you need from us before the kick-off?
+
+REP: Just three things: the chart of accounts, a list of the budget owners with their breweries, and last year's budget file so we can see the structure.
+
+PROSPECT: I can send all three this week.
+
+REP: Perfect. Then I'll send the security pack today and a draft implementation plan by Friday, with Kofi's leave built in.
+
+PROSPECT: Sounds good. Thanks, this has been easy.
+
+REP: Glad to hear it. Thanks, Alan.

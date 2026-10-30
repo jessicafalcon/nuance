@@ -1,0 +1,57 @@
+REP: Hi Sven, thanks for the time. I know you're travelling this week.
+
+PROSPECT: I'm at the yard in the north today, so if the connection drops, that's why.
+
+REP: Understood. Last time you gave me an overview of Brennick Marine Group. I'd like to go deeper on two things you mentioned: how the group rolls up, and how the monthly pack is produced.
+
+PROSPECT: Those are the two things that keep my team busy. Let's do it.
+
+REP: Let's start with the group structure. You have the parent company, two shipyards, a chartering business and a parts distributor.
+
+PROSPECT: Six entities in total. The parts business has a subsidiary abroad.
+
+REP: And the main need is a group budget and forecast across all six.
+
+PROSPECT: Yes. Today each entity sends a workbook and we combine them. It takes a week, and the intercompany is always wrong the first time.
+
+REP: That's common. In the demo you saw the entity roll-up, with intercompany eliminations and currency translation handled in the plan.
+
+PROSPECT: The demo looked fine for the simple case. Ours isn't simple.
+
+REP: Tell me where it gets harder.
+
+PROSPECT: We also have three entities reporting in different currencies, and two of them follow a different accounting standard, so would this replace our consolidation tool or sit next to it?
+
+REP: Thanks for asking directly. I'd say sit next to it. We consolidate for planning and management reporting, including the currency translation and standard intercompany eliminations, but we're not built for statutory consolidation across several accounting standards. I'd recommend keeping your consolidation tool for statutory reporting and loading its consolidated actuals into planning.
+
+PROSPECT: That's what I suspected. I'd rather know now.
+
+REP: I'd also suggest a working session with one of our solutions consultants to map your entities and agree what stays in the consolidation tool and what moves to planning. That way there are no surprises later.
+
+PROSPECT: Fine. Let's do that. Now, the monthly pack.
+
+REP: Please.
+
+PROSPECT: The other thing is the management pack, which my team rebuilds in Excel every month because no system has ever got the layout right.
+
+REP: What does rebuilding involve?
+
+PROSPECT: We export the numbers, paste them into a template, fix the formatting, add commentary, and check every page against the source. Two people, two days, every month.
+
+REP: That's a lot of time. I'll be honest about what changes and what doesn't. The report templates cover the common management layouts, so some of the pack could come straight from the plan. For the parts that need a very specific layout, the spreadsheet add-in can refresh the numbers in your existing template, so the copy and paste goes away even if the final formatting stays in a spreadsheet.
+
+PROSPECT: That might cut it to one day. Could you show me with our real pack?
+
+REP: Yes. I'd suggest a short working session where we rebuild one or two pages of your current pack, to show where the add-in fits and where it doesn't. You'd change the numbers beforehand if they're sensitive.
+
+PROSPECT: I'll ask Ingrid to prepare a copy. She owns the pack.
+
+REP: Great. So two sessions: the entity mapping with a solutions consultant, and the pack rebuild with Ingrid. Would you like them on the same day?
+
+PROSPECT: Separate days. Different people. The entity one first, please.
+
+REP: Understood. I'll send times for both, entity mapping first.
+
+PROSPECT: Thanks. I'm losing signal, so let's stop here.
+
+REP: Thanks, Sven. Safe travels.

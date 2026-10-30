@@ -17,7 +17,7 @@ pipeline yet, so the tool cannot be run.**
 |---|---|---|
 | 1 | Scaffold, security hooks, CI | Done |
 | 2 | Objection themes (`weaknesses.yaml`) and loader | Done |
-| 3 | Synthetic transcripts and labels | Not started |
+| 3 | Synthetic transcripts and labels | Done |
 | 4 | Guardrail (verbatim quote, speaker, confidence) | Not started |
 | 5 | Detection through the Anthropic API | Not started |
 | 6 | Brief, Slack or file output, DuckDB log | Not started |
