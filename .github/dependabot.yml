@@ -1,0 +1,18 @@
+# Weekly update PRs for the locked Python dependencies and the SHA-pinned actions.
+# Security updates arrive as soon as an advisory is published, independent of this schedule.
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5

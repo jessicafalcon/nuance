@@ -37,7 +37,9 @@ Every detection is logged so objection frequency by theme can be analysed later.
 - Python 3.11+, managed with `uv` (or `pip` + `requirements.txt` if uv unavailable)
 - `anthropic` (Anthropic Python SDK) — detection via tool use with a JSON schema for structured output
 - Models: `claude-haiku-5-5` for detection (default); `claude-sonnet-5-5` optional for the follow-up draft and for the model comparison in the eval
-- `pyyaml`, `duckdb`, `python-dotenv`, `requests`, `pytest`
+- `pyyaml`, `duckdb`, `requests`
+- Secrets load with `uv run --env-file .env ...`; no code reads `.env` (§15)
+- Dev only: `pytest`, `pytest-socket` (no network in tests), `ruff`, `pyright`, `pre-commit`; pre-commit also runs gitleaks and zizmor, and `uv audit` checks the lockfile (§15)
 - Slack: incoming webhook if `SLACK_WEBHOOK_URL` is set; otherwise a mock that writes Block Kit JSON to `out/briefs/` and prints a readable preview
 
 Keep the model call behind one function so switching providers means changing only that function.
@@ -45,12 +47,18 @@ Keep the model call behind one function so switching providers means changing on
 ## 5. Repo structure
 
 ```
-objection-brief/
+nuance/                        # GitHub repo; package objection_brief, CLI objection-brief
 ├── README.md
-├── CLAUDE.md                  # short pointer to this brief + coding conventions
-├── PROJECT_BRIEF.md           # this file
+├── CLAUDE.md                  # how we work: tools, pre-PR gate, records, current status
+├── PROJECT-BRIEF.md           # this file
+├── SECURITY.md                # private vulnerability reporting
+├── LICENSE                    # MIT
 ├── .env.example               # ANTHROPIC_API_KEY=, SLACK_WEBHOOK_URL=
+├── .pre-commit-config.yaml    # commit and push checks (secrets, lint, types, tests, audit)
 ├── pyproject.toml
+├── uv.lock
+├── .claude/                   # settings, hooks/ (guards), skills/ (ob-*), agents/ (reviewers)
+├── .github/                   # CI workflow, Dependabot, PR template
 ├── data/
 │   ├── weaknesses.yaml        # theme definitions + draft answers
 │   ├── transcripts/           # ~12 synthetic snippets (.txt)
@@ -58,6 +66,7 @@ objection-brief/
 ├── src/objection_brief/
 │   ├── config.py              # model ids, thresholds, price constants
 │   ├── weaknesses.py          # load + validate weaknesses.yaml
+│   ├── llm.py                 # call_model(): the one function that calls a model provider
 │   ├── detect.py              # detect(transcript) -> list[Detection]
 │   ├── guardrail.py           # verbatim-quote check + confidence filter
 │   ├── brief.py               # build Block Kit message + follow-up draft
@@ -67,6 +76,7 @@ objection-brief/
 ├── scripts/
 │   └── report.sql             # objections by theme
 ├── tests/
+│   ├── hooks/                 # tests for the guard hooks
 │   ├── test_guardrail.py
 │   ├── test_weaknesses.py
 │   └── test_brief.py
@@ -198,14 +208,16 @@ Tests must not call the API.
 
 ## 12. Build order (checkpoints)
 
-1. Scaffold repo, `pyproject.toml`, `.env.example`, `.gitignore`, `CLAUDE.md` → **checkpoint:** `uv run pytest` runs (no tests yet is fine)
-2. `weaknesses.yaml` + loader + `test_weaknesses.py` → **checkpoint:** tests pass
-3. Synthetic transcripts + `labels.yaml` → **checkpoint:** I review them before continuing
-4. `guardrail.py` + tests → **checkpoint:** tests pass
-5. `detect.py` → **checkpoint:** run on 2 transcripts, inspect raw JSON
-6. `brief.py`, `notify.py`, `log.py` + tests → **checkpoint:** `run-all` produces briefs in `out/briefs/`
-7. `eval` for both models → **checkpoint:** reports in `out/`
-8. README → **checkpoint:** final review
+One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked when its PR merges.
+
+- [ ] 1. Scaffold repo, `pyproject.toml`, `.env.example`, `.gitignore`, `CLAUDE.md`, security hooks, CI → **checkpoint:** `uv run pytest` runs (only the hook tests so far)
+- [ ] 2. `weaknesses.yaml` + loader + `test_weaknesses.py` → **checkpoint:** tests pass
+- [ ] 3. Synthetic transcripts + `labels.yaml` → **checkpoint:** I review them before continuing
+- [ ] 4. `guardrail.py` + tests → **checkpoint:** tests pass
+- [ ] 5. `llm.py` + `detect.py` → **checkpoint:** run on 2 transcripts, inspect raw JSON
+- [ ] 6. `brief.py`, `notify.py`, `log.py` + tests → **checkpoint:** `run-all` produces briefs in `out/briefs/`
+- [ ] 7. `eval` for both models → **checkpoint:** reports in `out/`
+- [ ] 8. README → **checkpoint:** final review
 
 ## 13. Acceptance criteria
 
@@ -217,7 +229,19 @@ Tests must not call the API.
 
 ## 14. Conventions for Claude Code
 
+- How we work (skills, hooks, review agents, the pre-PR gate, records) is in `CLAUDE.md`.
 - Ask before adding any dependency not listed in section 4.
 - Small, typed functions; docstrings on public functions.
 - Run tests after each step; don't move to the next checkpoint with failing tests.
 - When unsure about scope, choose the smaller option and note it in the README.
+
+## 15. Decisions
+
+| Decision | Reason |
+|---|---|
+| GitHub repo `nuance`, public from the first push; package `objection_brief`, CLI `objection-brief` | The repo name follows the working directory; the code keeps the product name |
+| Secrets load with `uv run --env-file .env`; `python-dotenv` dropped | No code ever reads `.env`, one dependency fewer |
+| Model calls live in `llm.py` behind `call_model()` | §4's "one function" needs one home shared by `detect.py` and `brief.py`; a hook enforces it |
+| Dev tooling: ruff, pyright, pre-commit, pytest-socket; gitleaks, zizmor and `uv audit` (native to uv, used instead of pip-audit) | The repo is public: secrets, workflow and dependency checks run at commit, push and in CI |
+| Real vendor names are blocked by SHA-256 digest (`.claude/hooks/banned-terms.sha256`) | The hard rule is checked in hooks and CI without the repo naming any vendor |
+| Python 3.12 | Within §4's 3.11+; the version CI tests |

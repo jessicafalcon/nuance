@@ -1,0 +1,102 @@
+# Runs locally before each commit and push, and in CI over every file. Ruff and pyright
+# run from the project venv (`uv run --frozen`) so their versions come from uv.lock.
+# `pre-commit install` installs all three stages listed here.
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
+default_stages: [pre-commit]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        # --enforce-all so CI checks every tracked file, not only newly staged ones.
+        args: ["--maxkb=1000", "--enforce-all"]
+      - id: check-merge-conflict
+        args: ["--assume-in-merge"]
+      - id: check-case-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  # Keep in sync with `required-version` in pyproject.toml.
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.12.5
+    hooks:
+      - id: uv-lock
+
+  # The system binary, so CI checks it against a pinned checksum instead of building it.
+  # Scans staged changes only, so CI skips it and scans the full history instead.
+  # Keep the rev in sync with the gitleaks version in .github/workflows/ci.yml.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks-system
+        pass_filenames: false
+
+  # Lints the GitHub Actions workflows for injection, excessive permissions, unpinned
+  # actions and credential persistence.
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.30.1
+    hooks:
+      - id: zizmor
+        args: ["--offline"]
+
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run --frozen ruff check --fix
+        language: system
+        types_or: [python, pyi]
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --frozen ruff format
+        language: system
+        types_or: [python, pyi]
+      - id: pyright
+        name: pyright
+        # --project: a pyrightconfig.json in a parent directory would otherwise win.
+        entry: uv run --frozen pyright --project pyproject.toml
+        language: system
+        types_or: [python, pyi]
+        pass_filenames: false
+      # Same rules as the Claude Code PostToolUse hook (ob-craft, module map).
+      - id: boundary-guard
+        name: boundary guard
+        entry: uv run --frozen python .claude/hooks/boundary_guard.py
+        language: system
+        files: ^src/objection_brief/.*\.py$
+      # Same rules as the Claude Code PreToolUse hook: staged files at pre-commit, the
+      # message at commit-msg, every tracked file in CI.
+      - id: content-guard
+        name: content guard (secrets, banned terms)
+        entry: uv run --frozen python .claude/hooks/content_guard.py
+        language: system
+        types: [text]
+        stages: [pre-commit, commit-msg]
+
+      # Before anything leaves the machine: the tests, the whole history for secrets,
+      # and the locked dependencies for known vulnerabilities. CI repeats all three.
+      - id: pytest
+        name: pytest (pre-push)
+        entry: uv run --frozen pytest -q
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+      - id: gitleaks-history
+        name: gitleaks full history (pre-push)
+        entry: gitleaks git --redact --no-banner .
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+      - id: uv-audit
+        name: uv audit (pre-push)
+        entry: uv audit --frozen
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
