@@ -167,18 +167,31 @@ Keep a detection only if all are true. A rejection carries the `RejectReason` of
 - `confidence` is in [0, 1], so NaN fails (`invalid_confidence`), and `>= config.min_confidence`, 0.6 (`low_confidence`); that it is a number is checked when `detect` parses the answer
 - `theme_id` exists in `weaknesses.yaml` (`unknown_theme`)
 
-Count and report rejections by reason.
+Count and report rejections by reason, `malformed_detection` included: one function, `guardrail.count_rejections`, takes the verdicts and the malformed items, and `run`, `run-all` and `eval` count through it.
 
 ### 7.3 Brief
 - Build a Slack Block Kit message with the five elements from section 3, plus a footer: "Draft answer — review before using."
-- Follow-up paragraph: one LLM call that may use **only** the matching theme's `draft_answer`, `proof` and `follow_up_angle`, plus the quote. No invented facts, figures or customer names.
+  Every interpolated string is escaped for Slack (`&`, `<`, `>`) and every text field kept within Slack's limits; truncation never removes the footer.
+- One item per theme: when the model names a theme more than once, the brief shows the most confident kept detection
+  (the first on a tie). Every detection is still logged (§7.5).
+- Follow-up paragraph: one LLM call per item that may use **only** the matching theme's `draft_answer`, `proof` and `follow_up_angle`, plus the quote. No invented facts, figures or customer names.
+  The call uses `config.follow_up_model` (Claude Haiku 5.5) at effort `low` with a plain-text answer; the quote goes in the user turn, as data.
+- The draft is checked in code before it reaches the brief: an answer that stopped for any reason other than `end_turn`,
+  an empty draft, a draft that drops the proof's `[PLACEHOLDER]` marker, or one that states a figure in digits that isn't in its
+  inputs is withheld, and the brief says why. No answer at all (an offline miss, a failed call) is an error for that transcript.
 
 ### 7.4 Notify
 `SLACK_WEBHOOK_URL` set → POST. Otherwise write `out/briefs/<transcript_id>.json` and print a readable preview.
+The URL must start with `https://hooks.slack.com/`, redirects are not followed, and a failure reports the HTTP status or the
+error's type, never the URL.
 
 ### 7.5 Log
 DuckDB table `detections` (BigQuery-compatible types):
 `run_id STRING, transcript_id STRING, theme_id STRING, quote STRING, confidence FLOAT64, model STRING, input_tokens INT64, output_tokens INT64, kept BOOL, reject_reason STRING, created_at TIMESTAMP`
+
+DuckDB accepts these names except `FLOAT64`, which it spells `DOUBLE`. One row per detection, a malformed item included
+(no theme, quote or confidence); the token columns hold the usage of the detection call on each of its rows; `created_at` is UTC.
+Detections are logged before the brief is built, so a failed follow-up or delivery still leaves the record.
 
 `scripts/report.sql`: objection count by theme, kept vs rejected.
 
@@ -300,3 +313,6 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 | A quote matches only on word boundaries (§7.2) | A plain substring test kept "complicated" from "uncomplicated", reversing what the prospect said; boundaries make the match stricter, never fuzzier |
 | Detection uses structured outputs (`output_config.format`) instead of a forced tool, sends no `temperature`, and sets effort `low` on every model (§7.1, §7.6) | Claude Sonnet 5.5, the eval's second model, rejects a forced `tool_choice`, and API version `2026-10-21` rejects `temperature` on every model. Reproducible numbers come from the replay cache, not from sampling; one effort level keeps the two models comparable |
 | `RejectReason` lives in `detect.py`, with `malformed_detection` for an item that doesn't parse (§7.1) | `guardrail` already imports `detect`; the reverse would be a cycle. The first module that can reject a detection holds the vocabulary |
+| The brief shows one item per theme, its most confident kept detection; the detection prompt stays as it is (§7.3) | The recorded t01 answer names `access_permissions` twice despite the "at most once" rule. A prompt rule can't guarantee it, so the code handles it either way, and a prompt change before the eval exists (step 7) can't be measured |
+| `guardrail.count_rejections` requires the malformed items (§7.2) | One counter for `run`, `run-all` and the eval, which no caller can call without them |
+| Follow-up drafts are checked in code and withheld with a reason; a missing or failed call fails the transcript; Claude Haiku 5.5 writes them (§7.3) | The prompt asks for grounding, and the placeholder and figure checks verify part of it at no cost. A missing recording shown as "no draft" would pass CI. Haiku is the smaller option (§14) |

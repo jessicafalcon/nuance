@@ -209,17 +209,20 @@ def test_run_all_continues_past_a_failed_transcript(
     assert (repo / config.briefs_dir / "t01_permissions.json").exists()
 
 
-@pytest.mark.usefixtures("live")
-def test_a_webhook_that_is_not_slacks_fails_the_transcript_without_posting(
-    t01: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+def test_a_webhook_that_is_not_slacks_is_refused_before_any_call(
+    t01: Path,
+    live: list[dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
-    # No network: the URL is refused before any request (pytest-socket would fail one).
+    # Checked up front, so a mistyped URL costs no model call; no request is made
+    # either (pytest-socket would fail one).
     monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://collector.example/hook")
-    assert main(["run", str(t01)]) == 1
+    assert main(["run", str(t01)]) == 2
     err = capsys.readouterr().err
     assert "SLACK_WEBHOOK_URL must start with https://hooks.slack.com/" in err
     assert "collector.example" not in err
-    assert not (t01.parents[2] / config.briefs_dir).exists()
+    assert live == []
 
 
 def test_run_outside_the_repository_root_is_refused(

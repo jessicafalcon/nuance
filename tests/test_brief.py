@@ -18,6 +18,8 @@ from objection_brief.brief import (
     draft_follow_up,
     follow_up_prompt,
     grounding_problem,
+    items,
+    preview,
     select,
 )
 from objection_brief.detect import Detection, RejectReason, Speaker
@@ -134,7 +136,7 @@ def test_an_ungrounded_or_unusable_draft_is_withheld_with_its_reason(
     follow_up = draft_follow_up(
         PERMISSIONS, QUOTE, call=FakeCall(output, stop_reason), model=config.follow_up_model
     )
-    assert follow_up.text is None
+    assert follow_up.text == output.strip()
     assert follow_up.problem is not None
     assert problem in follow_up.problem
 
@@ -186,12 +188,39 @@ def test_message_has_the_five_elements_per_theme_and_the_draft_footer() -> None:
     assert message["unfurl_media"] is False
 
 
-def test_a_withheld_draft_shows_its_reason() -> None:
+def test_a_withheld_draft_shows_its_reason_and_never_its_text() -> None:
+    invented = "Teams cut setup time by 40%."
     withheld = FollowUp(
-        None, "the draft states '40', a figure not in the approved points", Usage(1, 1)
+        invented, "the draft states '40', a figure not in the approved points", Usage(1, 1)
     )
-    texts = _texts(build_message("t01", [_item(follow_up=withheld)]))
-    assert any("_No draft: the draft states '40'" in t for t in texts)
+    message = build_message("t01", [_item(follow_up=withheld)])
+    assert any("_No draft: the draft states '40'" in t for t in _texts(message))
+    assert invented not in json.dumps(message)
+
+
+def test_items_pairs_each_selected_detection_with_its_theme_and_follow_up() -> None:
+    call = FakeCall()
+    pricing = _detection("pricing_escalation", 0.8)
+    verdicts = [
+        Verdict(_detection(confidence=0.6), None),
+        Verdict(_detection(), None),
+        Verdict(pricing, None),
+    ]
+    entries = items(verdicts, THEMES.values(), call=call, model=config.follow_up_model)
+
+    assert [(e.theme.id, e.detection.confidence) for e in entries] == [
+        ("access_permissions", 0.9),
+        ("pricing_escalation", 0.8),
+    ]
+    # One follow-up per theme, not per detection; the last call was for pricing.
+    assert THEMES["pricing_escalation"].draft_answer in call.kwargs["system"]
+
+
+def test_preview_reads_the_message_and_drops_control_characters() -> None:
+    text = preview(build_message("t01", [_item(quote="cost & <scale>\x1b[2J")]))
+    assert ">cost & <scale>[2J" in text
+    assert "\x1b" not in text
+    assert text.endswith(FOOTER)
 
 
 def test_slack_control_sequences_in_a_quote_are_escaped() -> None:

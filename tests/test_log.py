@@ -65,42 +65,22 @@ def test_kept_rejected_and_malformed_detections_land_with_their_columns(tmp_path
         ("created_at", "TIMESTAMP"),
     ]
     # Stored as UTC without a zone, as a TIMESTAMP holds it.
+    # Stored as UTC without a zone, as a TIMESTAMP holds it.
     utc_noon = datetime(2026, 10, 30, 12, 0, tzinfo=UTC).replace(tzinfo=None)
-    common = ("claude-haiku-5-5", 2572, 134)
+    head, usage = ("run-1", "t01_permissions"), ("claude-haiku-5-5", 2572, 134)
     assert got == [
+        (*head, "access_permissions", "sounds painful", 0.9, *usage, True, None, utc_noon),
         (
-            "run-1",
-            "t01_permissions",
-            "access_permissions",
-            "sounds painful",
-            0.9,
-            *common,
-            True,
-            None,
-            utc_noon,
-        ),
-        (
-            "run-1",
-            "t01_permissions",
+            *head,
             "pricing_escalation",
             "it's fine",
             0.7,
-            *common,
+            *usage,
             False,
             "speaker_not_prospect",
             utc_noon,
         ),
-        (
-            "run-1",
-            "t01_permissions",
-            None,
-            None,
-            None,
-            *common,
-            False,
-            "malformed_detection",
-            utc_noon,
-        ),
+        (*head, None, None, None, *usage, False, "malformed_detection", utc_noon),
     ]
 
 

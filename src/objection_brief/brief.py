@@ -21,7 +21,10 @@ __all__ = [
     "escape",
     "follow_up_prompt",
     "grounding_problem",
+    "items",
+    "preview",
     "select",
+    "unescape",
 ]
 
 # Brief §7.3: every brief ends with this line, and truncation never removes it.
@@ -39,9 +42,12 @@ _NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
 
 @dataclass(frozen=True, slots=True)
 class FollowUp:
-    """The drafted paragraph, or the reason it was withheld, and the call's usage."""
+    """The drafted paragraph, the check it fails if any, and the call's usage.
 
-    text: str | None
+    A draft with a `problem` is withheld: the brief shows the problem instead.
+    """
+
+    text: str
     problem: str | None
     usage: Usage
 
@@ -92,6 +98,27 @@ def select(verdicts: Iterable[Verdict]) -> tuple[Detection, ...]:
     return tuple(best.values())
 
 
+def items(
+    verdicts: Iterable[Verdict], themes: Iterable[Theme], *, call: ModelCall, model: str
+) -> tuple[BriefItem, ...]:
+    """One item per theme kept in `verdicts`, each with its follow-up call made.
+
+    Raises:
+        LLMError: a follow-up call got no answer (see `draft_follow_up`).
+    """
+    by_id = {theme.id: theme for theme in themes}
+    result: list[BriefItem] = []
+    for detection in select(verdicts):
+        # A kept detection's theme is in the theme file: the guardrail checked it.
+        theme = by_id[detection.theme_id]
+        result.append(
+            BriefItem(
+                theme, detection, draft_follow_up(theme, detection.quote, call=call, model=model)
+            )
+        )
+    return tuple(result)
+
+
 def follow_up_prompt(theme: Theme) -> str:
     """The follow-up instructions, holding only the theme's answer, proof and next step."""
     return _SYSTEM.format(
@@ -120,7 +147,7 @@ def draft_follow_up(theme: Theme, quote: str, *, call: ModelCall, model: str) ->
         problem = f"the model stopped with {answer.stop_reason!r}, not 'end_turn'"
     else:
         problem = grounding_problem(text, theme, quote)
-    return FollowUp(text if problem is None else None, problem, answer.usage)
+    return FollowUp(text, problem, answer.usage)
 
 
 def grounding_problem(text: str, theme: Theme, quote: str) -> str | None:
@@ -147,7 +174,16 @@ def escape(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def build_message(transcript_id: str, items: Sequence[BriefItem]) -> JSON:
+def unescape(text: str) -> str:
+    """Undo `escape`, for reading a message outside Slack; keep in sync with it.
+
+    >>> unescape(escape("<!here> & more"))
+    '<!here> & more'
+    """
+    return text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
+
+
+def build_message(transcript_id: str, entries: Sequence[BriefItem]) -> JSON:
     """The Block Kit message: the five elements of brief §3 per theme, then the footer.
 
     Every interpolated string is escaped and every text field kept within Slack's limit.
@@ -161,14 +197,14 @@ def build_message(transcript_id: str, items: Sequence[BriefItem]) -> JSON:
             },
         }
     ]
-    for item in items:
+    for item in entries:
         theme, follow_up = item.theme, item.follow_up
         # One line, folded as the guardrail folds it, so the `>` quotes all of it.
         quote = " ".join(item.detection.quote.split())
         draft = (
             escape(follow_up.text)
-            if follow_up.text is not None
-            else f"_No draft: {escape(follow_up.problem or 'unknown')}. Write it from the answer and proof above._"
+            if follow_up.problem is None
+            else f"_No draft: {escape(follow_up.problem)}. Write it from the answer and proof above._"
         )
         blocks += [
             _section(f"*Objection:* {escape(theme.label)}"),
@@ -179,13 +215,35 @@ def build_message(transcript_id: str, items: Sequence[BriefItem]) -> JSON:
             {"type": "divider"},
         ]
     blocks.append({"type": "context", "elements": [{"type": "mrkdwn", "text": FOOTER}]})
-    labels = ", ".join(escape(item.theme.label) for item in items)
+    labels = ", ".join(escape(item.theme.label) for item in entries)
     return {
         "text": _fit(f"Objection brief for {transcript_id}: {labels}", _TEXT_LIMIT),
         "blocks": blocks,
         "unfurl_links": False,
         "unfurl_media": False,
     }
+
+
+def preview(message: JSON) -> str:
+    """Render a message from `build_message` as plain text for the terminal.
+
+    Slack's escapes are undone for reading, and control characters are dropped, so a
+    transcript can't send escape sequences to the terminal.
+
+    >>> print(preview({"blocks": [{"type": "section", "text": {"text": "a &lt;b&gt;"}}, {"type": "divider"}]}))
+    a <b>
+    ---
+    """
+    lines: list[str] = []
+    for block in message["blocks"]:
+        if block["type"] == "divider":
+            lines.append("---")
+        elif block["type"] == "context":
+            lines.extend(element["text"] for element in block["elements"])
+        else:
+            lines.append(block["text"]["text"])
+    text = unescape("\n".join(lines))
+    return "".join(c for c in text if c == "\n" or c.isprintable())
 
 
 def _section(text: str) -> JSON:

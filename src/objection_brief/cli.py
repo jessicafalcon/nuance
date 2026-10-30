@@ -11,7 +11,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from objection_brief import brief, config, guardrail, llm, log, notify
-from objection_brief.detect import DetectError, RejectReason, detect
+from objection_brief.detect import DetectError, DetectResult, RejectReason, detect
+from objection_brief.guardrail import Verdict
 from objection_brief.weaknesses import Theme, WeaknessesError, load_themes
 
 __all__ = ["main"]
@@ -47,35 +48,39 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     if args.command == "run":
-        return _run([args.transcript], offline=args.offline, summarize=False)
+        codes = _run([args.transcript], offline=args.offline)
+        return max(codes.values(), default=_BAD_INPUT)
     # A fixed directory, not a user glob, so a run's size and cost are known (ob-security).
-    return _run(sorted(config.transcripts_dir.glob("*.txt")), offline=args.offline, summarize=True)
-
-
-def _run(paths: Sequence[Path], *, offline: bool, summarize: bool) -> int:
-    try:
-        themes = load_themes(config.themes_file)
-    # OSError: a file that can't be read, or a run from outside the repository root.
-    except (WeaknessesError, OSError) as error:
-        print(f"error: {error}", file=sys.stderr)
-        return _BAD_INPUT
-    if not paths:
-        print(f"error: no .txt transcripts in {config.transcripts_dir}", file=sys.stderr)
-        return _BAD_INPUT
-    settings = config.load_settings()
-    run_id = uuid.uuid4().hex
-    # One bad transcript is reported and the rest still run (ob-correctness, invariant 2).
-    codes = {
-        path.stem: _process(path, themes, settings=settings, offline=offline, run_id=run_id)
-        for path in paths
-    }
-    if summarize:
+    codes = _run(sorted(config.transcripts_dir.glob("*.txt")), offline=args.offline)
+    if codes:
         failed = [stem for stem, code in codes.items() if code != _OK]
         print(
             f"{len(codes)} transcripts, {len(failed)} failed"
             + (f" ({', '.join(failed)})" if failed else "")
         )
-    return max(codes.values())
+    return max(codes.values(), default=_BAD_INPUT)
+
+
+def _run(paths: Sequence[Path], *, offline: bool) -> dict[str, int]:
+    """Process each transcript and return its exit code by id; empty when nothing could run."""
+    settings = config.load_settings()
+    try:
+        themes = load_themes(config.themes_file)
+        if settings.slack_webhook_url is not None:
+            # Before any model call, so a mistyped URL costs nothing.
+            notify.check_webhook(settings.slack_webhook_url)
+        if not paths:
+            raise _InputError(f"no .txt transcripts in {config.transcripts_dir}")
+    # OSError: a file that can't be read, or a run from outside the repository root.
+    except (_InputError, WeaknessesError, notify.NotifyError, OSError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return {}
+    run_id = uuid.uuid4().hex
+    # One bad transcript is reported and the rest still run (ob-correctness, invariant 2).
+    return {
+        path.stem: _process(path, themes, settings=settings, offline=offline, run_id=run_id)
+        for path in paths
+    }
 
 
 def _process(
@@ -97,22 +102,54 @@ def _process(
         directory=config.llm_cache_dir,
         offline=offline,
         record=llm.may_record(path, config.transcripts_dir),
-        now=lambda: _utc_now().isoformat(timespec="seconds"),
+        now=lambda: datetime.now(UTC).isoformat(timespec="seconds"),
     )
     call = functools.partial(llm.call_model, cache=cache, api_key=settings.anthropic_api_key)
     try:
         result = detect(transcript, themes, call=call, model=config.detect_model)
     except (llm.LLMError, DetectError) as error:
-        print(f"{stem}: {error}{_HINTS.get(type(error), '')}", file=sys.stderr)
-        return _FAILED
+        return _fail(stem, error)
+    verdicts = guardrail.check(result.detections, transcript, themes)
+    _print_verdicts(stem, result, verdicts)
 
+    # Logged before the brief, so a failed follow-up or delivery still leaves a record.
+    rows = log.rows(
+        run_id=run_id,
+        transcript_id=stem,
+        model=config.detect_model,
+        usage=result.answer.usage,
+        verdicts=verdicts,
+        malformed=result.malformed,
+        created_at=datetime.now(UTC),
+    )
+    try:
+        log.append(config.log_db, rows)
+        entries = brief.items(verdicts, themes, call=call, model=config.follow_up_model)
+        if not entries:
+            print("  no brief: nothing kept")
+            return _OK
+        message = brief.build_message(stem, entries)
+        where = notify.notify(
+            message, stem, webhook_url=settings.slack_webhook_url, out_dir=config.briefs_dir
+        )
+    except (log.LogError, llm.LLMError, notify.NotifyError) as error:
+        return _fail(stem, error)
+    withheld = sum(entry.follow_up.problem is not None for entry in entries)
+    print(
+        f"  brief {'posted to Slack' if where is None else f'written to {where}'}"
+        + (f", {withheld} follow-up draft(s) withheld" if withheld else "")
+    )
+    print(brief.preview(message))
+    return _OK
+
+
+def _print_verdicts(stem: str, result: DetectResult, verdicts: Sequence[Verdict]) -> None:
     answer = result.answer
     source = "replayed" if answer.replayed else "live"
     print(
         f"{stem}: {config.detect_model}, {source}, recorded {answer.recorded_at}, "
         f"{answer.usage.input_tokens} input and {answer.usage.output_tokens} output tokens"
     )
-    verdicts = guardrail.check(result.detections, transcript, themes)
     for verdict in verdicts:
         d = verdict.detection
         status = "kept" if verdict.kept else f"rejected ({verdict.reject_reason})"
@@ -124,52 +161,10 @@ def _process(
     counts = ", ".join(f"{reason} {n}" for reason, n in sorted(rejections.items()))
     print(f"  {kept} kept, {rejections.total()} rejected" + (f" ({counts})" if counts else ""))
 
-    # Logged before the brief, so a failed follow-up or delivery still leaves a record.
-    rows = log.rows(
-        run_id=run_id,
-        transcript_id=stem,
-        model=config.detect_model,
-        usage=answer.usage,
-        verdicts=verdicts,
-        malformed=result.malformed,
-        created_at=_utc_now(),
-    )
-    try:
-        log.append(config.log_db, rows)
-    except log.LogError as error:
-        print(f"{stem}: {error}", file=sys.stderr)
-        return _FAILED
 
-    selected = brief.select(verdicts)
-    if not selected:
-        print("  no brief: nothing kept")
-        return _OK
-    by_id = {theme.id: theme for theme in themes}
-    try:
-        items = [
-            brief.BriefItem(
-                by_id[d.theme_id],
-                d,
-                brief.draft_follow_up(
-                    by_id[d.theme_id], d.quote, call=call, model=config.follow_up_model
-                ),
-            )
-            for d in selected
-        ]
-        message = brief.build_message(stem, items)
-        where = notify.notify(
-            message, stem, webhook_url=settings.slack_webhook_url, out_dir=config.briefs_dir
-        )
-    except (llm.LLMError, notify.NotifyError) as error:
-        print(f"{stem}: {error}{_HINTS.get(type(error), '')}", file=sys.stderr)
-        return _FAILED
-    withheld = sum(item.follow_up.text is None for item in items)
-    print(
-        f"  brief {'posted to Slack' if where is None else f'written to {where}'}"
-        + (f", {withheld} follow-up draft(s) withheld" if withheld else "")
-    )
-    print(notify.preview(message))
-    return _OK
+def _fail(stem: str, error: Exception) -> int:
+    print(f"{stem}: {error}{_HINTS.get(type(error), '')}", file=sys.stderr)
+    return _FAILED
 
 
 def _read_transcript(path: Path) -> str:
@@ -184,7 +179,3 @@ def _read_transcript(path: Path) -> str:
         return path.read_text("utf-8")
     except UnicodeDecodeError:
         raise _InputError(f"{path} is not UTF-8 text") from None
-
-
-def _utc_now() -> datetime:
-    return datetime.now(UTC)
