@@ -36,10 +36,15 @@ def test_eight_positives_and_four_negatives() -> None:
 @pytest.mark.parametrize("path", TRANSCRIPTS, ids=lambda path: path.stem)
 def test_every_line_is_one_labelled_turn(path: Path) -> None:
     # The guardrail reads a prospect turn as one `PROSPECT:` line (brief §7.2), so a turn
-    # wrapped onto an unlabelled line would put its quote outside the speaker check.
+    # wrapped onto an unlabelled line would put its quote outside the speaker check, and a
+    # rep turn on a `PROSPECT:` line would pass the rep's words off as the prospect's.
+    labels = ("REP: ", "PROSPECT: ")
     for number, line in enumerate(path.read_text("utf-8").splitlines(), start=1):
         if line.strip():
-            assert line.startswith(("REP: ", "PROSPECT: ")), f"{path.name}:{number}"
+            where = f"{path.name}:{number}"
+            assert line.startswith(labels), where
+            _, _, turn = line.partition(": ")
+            assert not any(label in turn for label in labels), where
 
 
 @pytest.mark.parametrize("path", TRANSCRIPTS, ids=lambda path: path.stem)
