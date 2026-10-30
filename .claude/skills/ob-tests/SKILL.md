@@ -38,19 +38,19 @@ live call fails the test instead of spending money.
    `call: ModelCall` (ob-craft), so tests pass a function with `call_model`'s keywords
    (minus `cache`) that returns a recorded tool input. `notify` tests use a fake `post` callable, not the network.
 
-## What each module must prove (brief §10 is the floor)
+## What each module must prove
 
-| Module | Must prove |
+Brief §10 is the floor and covers `weaknesses`, `llm` and the pipeline completely. This
+table adds what §10 doesn't say.
+
+| Module | Must prove, beyond brief §10 |
 |---|---|
-| `guardrail` | Whitespace/case/curly-quote differences pass; paraphrase fails; rep and unknown speaker fail; confidence below threshold fails; unknown theme fails; each rejection carries its reason |
-| `weaknesses` | YAML loads; each validation rule in brief §6.1 fails with the theme and field named |
-| `brief` | Block Kit has the five elements and the footer; `<`, `>`, `&` and `<!channel>` in a quote are escaped; long text truncates but the footer survives |
+| `guardrail` | Curly quotes pass; a confidence equal to the threshold passes; an unknown speaker fails; each rejection carries its `RejectReason` |
+| `brief` | `<`, `>`, `&` and `<!channel>` in a quote are escaped; long text truncates but the footer survives |
 | `detect` | A recorded tool input parses into `Detection`s; a missing field or an out-of-enum value becomes a recorded rejection, not an exception |
 | `notify` | No webhook → file under `out/briefs/` with a validated name; webhook error → `NotifyError` whose message has no URL |
 | `log` | Kept and rejected detections both land with the right columns and types |
 | `eval` | Precision and recall on a hand-computed example, including a theme with no positives |
-| `llm` | Key stable across runs and changed by each input; a hit makes no call; an offline miss raises; inputs outside `data/transcripts/` never recorded; no entry contains the API key |
-| pipeline (`test_pipeline.py`) | `run-all --offline` and both `eval --offline` runs over the committed cache, twice: identical briefs and reports, reports equal the committed `reports/` files, no cache entry left unread |
 | hooks | Every block and allow rule (tests/hooks/) |
 
 ## Fakes and fixtures

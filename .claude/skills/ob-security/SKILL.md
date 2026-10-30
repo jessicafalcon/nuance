@@ -38,8 +38,8 @@ be bypassed by a PR. A check that matters exists in both.
 
 ### Secrets (ANTHROPIC_API_KEY, SLACK_WEBHOOK_URL)
 
-- They live only in `.env` (gitignored, from `.env.example`) and are loaded with
-  `uv run --env-file .env objection-brief ...`. No code reads `.env`.
+- They live only in `.env` (gitignored, from `.env.example`), loaded the way brief §4
+  says. No code reads `.env`.
 - Read once in `config.py` from `os.environ`; never from a CLI argument (shell history
   and `ps` keep those).
 - Never in output: not in logs, the DuckDB table, `out/`, exception messages, eval
@@ -65,8 +65,8 @@ write "ignore previous instructions". Defenses, all required:
   `quote`.
 - The guardrail's verbatim check means `quote` can only be text that is in the
   transcript; a fabricated quote is rejected.
-- The follow-up prompt gets only the theme's approved fields and the quote, and its
-  output goes to the account executive as a draft, never to a prospect.
+- The follow-up prompt gets only the inputs brief §7.3 allows, and its output goes
+  to the account executive as a draft, never to a prospect.
 
 ### Injection into Slack messages
 
@@ -86,8 +86,7 @@ characters per text field) by truncating, never by dropping the footer.
 - The tool writes only under `out/`, `data/llm_cache/` and `reports/`. A cache file is
   named by its 64-hex `sha256` key alone; a report by a `--model` value checked
   against the IDs pinned in `config.py`, never the raw argument.
-- Recording checks the transcript's resolved path (symlinks followed) is under
-  `data/transcripts/`.
+- Recording follows the privacy rule in brief §7.6.
 
 ### SQL
 
@@ -123,9 +122,9 @@ or file names. `scripts/report.sql` is static.
 - The repo only ever holds synthetic transcripts. A real transcript or review text
   is never committed, even "temporarily"; `out/` is gitignored.
 - The DuckDB file stores quotes; it stays in `out/`.
-- `data/llm_cache/` is committed and holds full prompts and responses. Entries are
-  recorded only for transcripts under `data/transcripts/`, never hold the API key or a
-  header, and pass the content guard at commit like any file.
+- `data/llm_cache/` is committed and holds full prompts and responses. Entries follow
+  brief §7.6's privacy and entry rules and pass the content guard at commit like any
+  file.
 
 ## Security review checklist
 

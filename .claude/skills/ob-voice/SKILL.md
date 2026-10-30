@@ -66,8 +66,8 @@ Claude-authored PR bodies end with `🤖 Generated with [Claude Code](https://cl
 - **The hypothesis is unvalidated, and every document says so where it matters.**
   Results are labelled with their data (synthetic, n transcripts), model and date.
 - **Name limits and non-goals plainly** as design choices.
-- **No real vendors, customers, people or review text.** Review themes are described
-  at category level and paraphrased, with sources and dates.
+- **The hard rules in brief §1 apply to every document,** and so does the Evidence rule
+  in brief §11 for describing review themes.
 - **State a fact once,** in the record that owns it (CLAUDE.md, records map), and point
   to it elsewhere. Restated rules drift; `docs-guard` checks only the facts that must repeat.
 - **A spec has no changelog.** The brief and CLAUDE.md state the current design; what
