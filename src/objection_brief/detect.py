@@ -209,4 +209,9 @@ def _problem(item: Any) -> str | None:
     # `bool` is an `int` in Python; JSON `true` is not a confidence.
     if isinstance(confidence, bool) or not isinstance(confidence, int | float):
         return "`confidence` is missing or not a number"
+    # JSON integers have no size limit, and one past the float range can't be converted.
+    try:
+        float(confidence)
+    except OverflowError:
+        return "`confidence` is too large to be a number"
     return None

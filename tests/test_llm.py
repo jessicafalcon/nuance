@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
+import anthropic
+import httpx2
 import pytest
 
 from objection_brief import llm
@@ -12,6 +15,7 @@ from objection_brief.llm import (
     Cache,
     CacheEntryError,
     CacheMissError,
+    MissingKeyError,
     ModelCallError,
     Usage,
     cache_key,
@@ -113,13 +117,63 @@ def test_entry_never_contains_the_api_key(tmp_path: Path, sent: list[dict[str, A
 def test_live_call_without_a_key_fails_before_sending(
     tmp_path: Path, sent: list[dict[str, Any]]
 ) -> None:
-    with pytest.raises(ModelCallError, match="ANTHROPIC_API_KEY"):
+    with pytest.raises(MissingKeyError, match="ANTHROPIC_API_KEY"):
         call_model(**REQUEST, cache=_cache(tmp_path), api_key=None)
     assert sent == []
 
 
+class FakeMessages:
+    """Stands in for `client.messages`: raises `error`, or returns a reply."""
+
+    def __init__(self, error: Exception | None = None) -> None:
+        self.error = error
+
+    def create(self, **request: Any) -> SimpleNamespace:
+        if self.error is not None:
+            raise self.error
+        return SimpleNamespace(
+            content=[
+                SimpleNamespace(type="thinking", thinking=""),
+                SimpleNamespace(type="text", text=OUTPUT),
+            ],
+            stop_reason="end_turn",
+            usage=SimpleNamespace(input_tokens=120, output_tokens=8),
+        )
+
+
+def _fake_client(monkeypatch: pytest.MonkeyPatch, messages: FakeMessages) -> None:
+    def factory(**options: Any) -> SimpleNamespace:
+        return SimpleNamespace(messages=messages)
+
+    monkeypatch.setattr(llm.anthropic, "Anthropic", factory)
+
+
+def test_live_answer_is_the_text_after_any_thinking_block(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _fake_client(monkeypatch, FakeMessages())
+    result = call_model(**REQUEST, cache=_cache(tmp_path), api_key=FAKE_KEY)
+    assert (result.output, result.stop_reason, result.usage) == (OUTPUT, "end_turn", Usage(120, 8))
+
+
+def test_api_failure_becomes_model_call_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    request = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
+    _fake_client(monkeypatch, FakeMessages(anthropic.APITimeoutError(request=request)))
+    with pytest.raises(ModelCallError, match="APITimeoutError"):
+        call_model(**REQUEST, cache=_cache(tmp_path), api_key=FAKE_KEY)
+    assert list(tmp_path.iterdir()) == []
+
+
 @pytest.mark.parametrize(
-    "content", ["not json", "{}", '{"output": 1, "stop_reason": null, "recorded_at": "x"}']
+    "content",
+    [
+        "not json",
+        "{}",
+        '{"output": 1, "stop_reason": null, "recorded_at": "x",'
+        ' "usage": {"input_tokens": 1, "output_tokens": 1}}',
+    ],
 )
 def test_unreadable_entry_names_the_file(tmp_path: Path, content: str) -> None:
     entry = tmp_path / f"{_key(REQUEST)}.json"

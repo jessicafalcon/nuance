@@ -95,6 +95,7 @@ def test_prompt_and_schema_name_every_theme_and_speaker() -> None:
         ({**ITEM, "speaker": "manager"}, "`speaker` 'manager' is not one of"),
         ({**ITEM, "confidence": "high"}, "`confidence` is missing or not a number"),
         ({**ITEM, "confidence": True}, "`confidence` is missing or not a number"),
+        ({**ITEM, "confidence": 10**400}, "`confidence` is too large to be a number"),
     ],
 )
 def test_malformed_item_is_rejected_not_raised(item: object, problem: str) -> None:

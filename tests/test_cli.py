@@ -1,14 +1,16 @@
-"""`run` refuses bad input before any call and reports an offline miss for the transcript."""
+"""`run` refuses bad input, records only synthetic transcripts, and replays offline."""
 
 from __future__ import annotations
 
 import shutil
 from pathlib import Path
+from typing import Any
 
 import pytest
 
-from objection_brief import config
+from objection_brief import config, llm
 from objection_brief.cli import main
+from objection_brief.llm import Usage
 
 REPO = Path(__file__).parents[1]
 
@@ -86,4 +88,39 @@ def test_live_run_without_a_key_says_how_to_load_it(
     t01: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     assert main(["run", str(t01)]) == 1
-    assert "ANTHROPIC_API_KEY is not set; a live call loads the key with" in capsys.readouterr().err
+    assert "ANTHROPIC_API_KEY is not set; a live call loads it with" in capsys.readouterr().err
+
+
+@pytest.fixture
+def live(repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A fake key and a fake live call in the temporary repository, with no network."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-" + "ant-" + "x" * 40)
+
+    def fake_send(request: dict[str, Any], api_key: str) -> tuple[str, str | None, Usage]:
+        return '{"objections": []}', "end_turn", Usage(100, 5)
+
+    monkeypatch.setattr(llm, "_send", fake_send)
+
+
+@pytest.mark.usefixtures("live")
+def test_live_run_records_a_synthetic_transcript(t01: Path) -> None:
+    assert main(["run", str(t01)]) == 0
+    assert len(list((t01.parents[2] / "data" / "llm_cache").iterdir())) == 1
+
+
+@pytest.mark.usefixtures("live")
+def test_live_run_outside_the_synthetic_directory_is_never_recorded(repo: Path) -> None:
+    # Brief §7.6, privacy: only transcripts under data/transcripts/ reach the cache.
+    elsewhere = repo / "elsewhere" / "t01_permissions.txt"
+    elsewhere.parent.mkdir()
+    shutil.copy(REPO / "data" / "transcripts" / elsewhere.name, elsewhere)
+    assert main(["run", str(elsewhere)]) == 0
+    assert not (repo / "data" / "llm_cache").exists()
+
+
+def test_run_outside_the_repository_root_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert main(["run", str(REPO / "data" / "transcripts" / "t01_permissions.txt")]) == 2
+    assert "weaknesses.yaml" in capsys.readouterr().err

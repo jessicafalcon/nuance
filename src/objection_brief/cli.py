@@ -24,7 +24,7 @@ _TRANSCRIPT_ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
 # What to do next, by error; the library errors state only what went wrong.
 _HINTS: dict[type[Exception], str] = {
     llm.CacheMissError: "; run once without --offline to record it",
-    llm.ModelCallError: "; a live call loads the key with `uv run --env-file .env objection-brief`",
+    llm.MissingKeyError: "; a live call loads it with `uv run --env-file .env objection-brief`",
 }
 
 
@@ -49,7 +49,8 @@ def _run(path: Path, *, offline: bool) -> int:
     try:
         transcript = _read_transcript(path)
         themes = load_themes(config.themes_file)
-    except (_InputError, WeaknessesError) as error:
+    # OSError: a file that can't be read, or a run from outside the repository root.
+    except (_InputError, WeaknessesError, OSError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
     cache = llm.Cache(

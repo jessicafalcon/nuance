@@ -21,6 +21,7 @@ __all__ = [
     "CacheEntryError",
     "CacheMissError",
     "LLMError",
+    "MissingKeyError",
     "ModelCall",
     "ModelCallError",
     "ModelResult",
@@ -43,6 +44,10 @@ class CacheMissError(LLMError):
 
 class CacheEntryError(LLMError):
     """A recorded answer can't be read; the message names the file."""
+
+
+class MissingKeyError(LLMError):
+    """A live call is needed and `ANTHROPIC_API_KEY` is not set."""
 
 
 class ModelCallError(LLMError):
@@ -131,7 +136,8 @@ def call_model(
     Raises:
         CacheMissError: offline, and nothing is recorded for the request.
         CacheEntryError: the recorded entry is unreadable.
-        ModelCallError: the live call failed or there is no API key.
+        MissingKeyError: a live call is needed and there is no API key.
+        ModelCallError: the live call failed.
     """
     request: JSON = {
         "model": model,
@@ -147,7 +153,7 @@ def call_model(
     if cache.offline:
         raise CacheMissError(f"no recorded answer for key {key} (prompt {prompt_version})")
     if not api_key:
-        raise ModelCallError("ANTHROPIC_API_KEY is not set")
+        raise MissingKeyError("ANTHROPIC_API_KEY is not set")
     output, stop_reason, usage = _send(request, api_key)
     result = ModelResult(output, stop_reason, usage, recorded_at=cache.now(), replayed=False)
     if cache.record:
