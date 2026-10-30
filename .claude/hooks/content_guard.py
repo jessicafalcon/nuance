@@ -120,14 +120,25 @@ def quote_at(command: str, end: int) -> str:
 
 
 def heredocs(command: str) -> list[re.Match[str]]:
-    """Real heredocs: a `<<` inside quotes (`echo '<<EOF'`) is text, not a heredoc."""
+    """Real heredocs: a `<<` inside quotes (`echo '<<EOF'`) is text, not a heredoc.
+
+    Quoting is judged on the command outside earlier heredoc bodies, whose apostrophes
+    are text.
+
+    >>> [m.group(3) for m in heredocs("a <<'X'\\nit's\\nX\\nb <<'Y'\\ny\\nY")]
+    ['X', 'Y']
+    """
     found: list[re.Match[str]] = []
+    outside = ""  # the command so far, heredoc bodies removed
     pos = 0
     while match := HEREDOC.search(command, pos):
-        if quote_at(command, match.start()):
+        before = outside + command[pos : match.start()]
+        if quote_at(before, len(before)):
+            outside = before + command[match.start() : match.start() + 2]
             pos = match.start() + 2
         else:
             found.append(match)
+            outside = before + match.group(1) + match.group(4)
             pos = match.end()
     return found
 
@@ -196,12 +207,15 @@ def find_secrets(text: str) -> list[str]:
 
 
 def _unquote(word: str) -> str:
-    """Remove shell quoting; expand variables unless the shell wouldn't (single quotes)."""
+    """Remove shell quoting, never expanding variables.
+
+    A name like `$TMPDIR/body.md` then matches no file and the guard fails closed, and
+    its error message shows the name as typed, so it can never echo a variable's value.
+    """
     try:
-        text = "".join(shlex.split(word))
+        return "".join(shlex.split(word))
     except ValueError:  # unbalanced quote: keep the word as typed
         return word
-    return text if word.startswith("'") else os.path.expandvars(text)
 
 
 def flag_values(command: str, flags: tuple[str, ...]) -> list[str]:

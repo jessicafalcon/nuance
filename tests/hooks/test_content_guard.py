@@ -233,3 +233,22 @@ def test_a_crashing_guard_blocks() -> None:
         [sys.executable, cg.__file__], input="not json", capture_output=True, text=True, check=False
     )
     assert result.returncode == 2
+
+
+def test_body_file_variables_are_never_expanded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("FAKEVAR", "leaked-value-123")
+    assert (
+        _hook("Bash", {"command": 'git commit --body-file=$FAKEVA""R'}, tmp_path, monkeypatch) == 2
+    )
+    assert "leaked-value-123" not in capsys.readouterr().err
+
+
+def test_an_apostrophe_in_one_heredoc_does_not_hide_the_next(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    command = "python3 - <<'PY'\nprint(\"it's `x`\")\nPY\ngit commit -F - <<'EOF'\nfeat: x\nEOF"
+    assert _hook("Bash", {"command": command}, tmp_path, monkeypatch) == 0
+    blocked = command.replace("feat: x", "feat: beat Northwind Planning")
+    assert _hook("Bash", {"command": blocked}, tmp_path, monkeypatch) == 2
