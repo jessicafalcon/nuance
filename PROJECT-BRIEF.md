@@ -155,10 +155,10 @@ t09_no_objection: []
 
 ### 7.2 Guardrail
 Keep a detection only if all are true. A rejection carries the `RejectReason` of the first check that fails, in this order:
-- `quote` appears in the transcript after normalising whitespace, quotes and case (`quote_not_found`; an empty quote fails too)
+- `quote` appears in the transcript after normalising whitespace, quotes and case, starting and ending on word boundaries (`quote_not_found`; an empty quote fails too)
 - `speaker == "prospect"` (`speaker_not_prospect`)
-- `quote` sits inside a single `PROSPECT:` turn, after the same normalisation (`quote_not_prospect`), so a rep's words labelled as the prospect's, or a quote spanning two turns, fail
-- `confidence` is a number in [0, 1] (`invalid_confidence`) and `>= config.min_confidence`, 0.6 (`low_confidence`)
+- `quote` sits inside a single `PROSPECT:` turn, with the same normalisation and boundaries (`quote_not_prospect`), so a rep's words labelled as the prospect's, or a quote spanning two turns, fail
+- `confidence` is in [0, 1], so NaN fails (`invalid_confidence`), and `>= config.min_confidence`, 0.6 (`low_confidence`); that it is a number is checked when `detect` parses the tool output
 - `theme_id` exists in `weaknesses.yaml` (`unknown_theme`)
 
 Count and report rejections by reason.
@@ -222,7 +222,7 @@ Note in the README that the test set is small and synthetic, so the numbers show
 
 ## 10. Tests (pytest)
 
-- `test_guardrail.py`: verbatim match with whitespace/case differences passes; paraphrased quote fails; rep speaker fails; a quote found only on a `REP:` line, or spanning two turns, fails; low confidence fails; unknown theme fails
+- `test_guardrail.py`: verbatim match with whitespace/case differences passes; paraphrased quote fails; a quote cut inside a word fails; rep speaker fails; a quote found only on a `REP:` line, or spanning two turns, fails; low confidence fails; unknown theme fails
 - `test_weaknesses.py`: YAML loads, ids unique, required fields present; each §6.1 validation rule fails with the theme and field named
 - `test_brief.py`: Block Kit JSON has the five elements and the draft footer
 
@@ -289,4 +289,5 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 | Python 3.12 | Within §4's 3.11+; the version CI tests |
 | Documents state each fact once and point to its owner; `docs-guard` checks the facts that must repeat (build-step state, pinned uv and gitleaks versions, the CLAUDE.md tool tables) after an edit to a record, a hook or a pinned config, and at every commit and PR | A rule restated in several documents drifted when only one was updated; a deterministic check runs everywhere at no model cost, and prose that restates a rule is left to review |
 | Theme validation is stricter than unique ids, all fields and `status: draft`: ids are lowercase snake_case, no field is empty, unknown or repeated, and `owner` contains "to validate" (§6.1) | Ids become schema enum values and log columns; a misspelled or pasted field would otherwise be ignored or silently replace the approved answer; the owner marker keeps every answer visibly unapproved |
-| The guardrail also requires the quote to sit inside one `PROSPECT:` turn, with its own reason `quote_not_prospect`; a confidence outside [0, 1] is `invalid_confidence` (§7.2) | The speaker field is the model's claim: a rep line close to a theme's example signals (t11) would otherwise pass if mislabelled. A separate reason keeps misattributions apart from paraphrases in the log, and every reason is assigned in one module |
+| The guardrail also requires the quote to sit inside one `PROSPECT:` turn, with its own reason `quote_not_prospect`; a confidence outside [0, 1] is `invalid_confidence` (§7.2) | The speaker field is the model's claim: a rep line close to a theme's example signals (t11) would otherwise pass if mislabelled. A separate reason keeps misattributions apart from paraphrases in the log |
+| A quote matches only on word boundaries (§7.2) | A plain substring test kept "complicated" from "uncomplicated", reversing what the prospect said; boundaries make the match stricter, never fuzzier |

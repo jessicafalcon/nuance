@@ -187,10 +187,14 @@ touched, commands run and results, records updated, open risks, next step.
   `data/labels.yaml` keyed by file stem.
 - **Build step 4 (guardrail):** merged (#8). `guardrail.check` →
   one `Verdict` per detection, the first failing check naming its `RejectReason`
-  (brief §7.2, including the single-`PROSPECT:`-turn rule); `normalize` serves both
+  (brief §7.2: word boundaries, a single `PROSPECT:` turn); `normalize` serves both
   sides of the match; `config.min_confidence` 0.6. `detect.py` holds only `Speaker`
   and `Detection` so far.
 - **Next:** a small PR adding `tests/test_data.py` (the transcript and label
   invariants from #7), then step 5 on `feat/detect` (brief §7.1, §7.6).
-- **Open decisions:** whether to tighten `excel_interop.detect_when`'s second clause
-  waits for recorded model answers (step 5 or 7).
+- **Open decisions:**
+  - Step 5: where the rejection reason for an unparseable model item lives. Likely
+    `RejectReason` moves to `detect.py` with a `malformed_detection` value, so
+    `detect` never imports `guardrail`.
+  - Tightening `excel_interop.detect_when`'s second clause, deferred until recorded
+    model answers exist (step 5 or 7).

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -75,10 +76,10 @@ def check(
 ) -> tuple[Verdict, ...]:
     """Return one verdict per detection, in order, named by the first check that fails.
 
-    The checks run in the order of `RejectReason`. A quote must sit inside one
-    `PROSPECT:` turn as well as in the transcript, so a rep's words the model labels
-    as the prospect's are rejected (`QUOTE_NOT_PROSPECT`), as is a quote that spans
-    two turns.
+    The checks run in the order of `RejectReason`. A quote must start and end on word
+    boundaries and sit inside one `PROSPECT:` turn as well as in the transcript, so a
+    rep's words the model labels as the prospect's are rejected (`QUOTE_NOT_PROSPECT`),
+    as is a quote that spans two turns.
     """
     whole = normalize(transcript)
     prospect_turns = _prospect_turns(transcript)
@@ -86,12 +87,16 @@ def check(
 
     def reason(detection: Detection) -> RejectReason | None:
         quote = normalize(detection.quote)
-        # An empty quote is a substring of every transcript, so it is checked first.
-        if not quote or quote not in whole:
+        # An empty quote matches every transcript, so it is checked first.
+        if not quote:
+            return RejectReason.QUOTE_NOT_FOUND
+        # Word boundaries on both ends, so "complicated" never matches "uncomplicated".
+        match = re.compile(rf"(?<!\w){re.escape(quote)}(?!\w)").search
+        if match(whole) is None:
             return RejectReason.QUOTE_NOT_FOUND
         if detection.speaker != Speaker.PROSPECT:
             return RejectReason.SPEAKER_NOT_PROSPECT
-        if not any(quote in turn for turn in prospect_turns):
+        if not any(match(turn) for turn in prospect_turns):
             return RejectReason.QUOTE_NOT_PROSPECT
         # Written so that NaN fails too.
         if not 0.0 <= detection.confidence <= 1.0:

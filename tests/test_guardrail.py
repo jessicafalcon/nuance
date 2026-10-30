@@ -84,6 +84,26 @@ def test_paraphrased_or_empty_quote_is_rejected(quote: str) -> None:
     assert _reason(_detection(quote=quote)) is RejectReason.QUOTE_NOT_FOUND
 
 
+@pytest.mark.parametrize(
+    ("quote", "transcript"),
+    [
+        pytest.param(
+            "complicated", "PROSPECT: The setup is uncomplicated.\n", id="starts-mid-word"
+        ),
+        pytest.param("setting up permissions for every budget own", TRANSCRIPT, id="ends-mid-word"),
+    ],
+)
+def test_quote_cut_inside_a_word_is_rejected(quote: str, transcript: str) -> None:
+    assert _reason(_detection(quote=quote), transcript) is RejectReason.QUOTE_NOT_FOUND
+
+
+def test_quote_cut_inside_a_word_on_the_prospect_line_is_rejected() -> None:
+    # The whole word is on the rep's line, so only the single-turn check can catch it.
+    transcript = "REP: Is it complicated?\n\nPROSPECT: No, it's uncomplicated.\n"
+    detection = _detection(quote="complicated")
+    assert _reason(detection, transcript) is RejectReason.QUOTE_NOT_PROSPECT
+
+
 @pytest.mark.parametrize("speaker", [Speaker.REP, Speaker.UNKNOWN])
 def test_speaker_other_than_prospect_is_rejected(speaker: Speaker) -> None:
     assert _reason(_detection(speaker=speaker)) is RejectReason.SPEAKER_NOT_PROSPECT
@@ -141,9 +161,38 @@ def test_unknown_theme_is_rejected(theme_id: str, themes: tuple[Theme, ...]) -> 
     assert _reason(detection, themes=themes) is RejectReason.UNKNOWN_THEME
 
 
-def test_first_failing_check_names_the_reason() -> None:
-    detection = _detection(speaker=Speaker.REP, confidence=0.1, theme_id="onboarding_speed")
-    assert _reason(detection) is RejectReason.SPEAKER_NOT_PROSPECT
+@pytest.mark.parametrize(
+    ("detection", "expected"),
+    [
+        pytest.param(
+            _detection(quote="a sentence nobody said", speaker=Speaker.REP),
+            RejectReason.QUOTE_NOT_FOUND,
+            id="not-found-before-speaker",
+        ),
+        pytest.param(
+            _detection(quote="who sees what", speaker=Speaker.REP),
+            RejectReason.SPEAKER_NOT_PROSPECT,
+            id="speaker-before-turn",
+        ),
+        pytest.param(
+            _detection(quote="who sees what", confidence=math.nan),
+            RejectReason.QUOTE_NOT_PROSPECT,
+            id="turn-before-invalid-confidence",
+        ),
+        pytest.param(
+            _detection(confidence=math.nan, theme_id="onboarding_speed"),
+            RejectReason.INVALID_CONFIDENCE,
+            id="invalid-before-low-confidence-and-theme",
+        ),
+        pytest.param(
+            _detection(confidence=0.1, theme_id="onboarding_speed"),
+            RejectReason.LOW_CONFIDENCE,
+            id="low-confidence-before-theme",
+        ),
+    ],
+)
+def test_first_failing_check_names_the_reason(detection: Detection, expected: RejectReason) -> None:
+    assert _reason(detection) is expected
 
 
 def test_every_detection_gets_a_verdict_in_order() -> None:
