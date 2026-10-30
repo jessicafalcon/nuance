@@ -118,7 +118,7 @@ Other themes, same fields:
 - `consolidation_depth` — complex multi-entity consolidation (answer must be honest about limits and suggest a realistic path)
 - `pricing_escalation` — seat-based cost growth and annual price increases
 
-Validation: unique `id`s in lowercase snake_case (they become schema enum values and log columns), every field present and non-empty, no unknown fields, `status: draft`, `owner` containing "to validate". A failure names the theme and the field.
+Validation: unique `id`s in lowercase snake_case (they become schema enum values and log columns), every field present and non-empty, no unknown or repeated fields, `status: draft`, `owner` containing "to validate". A failure names the theme and the field.
 
 ### 6.2 `data/transcripts/`
 

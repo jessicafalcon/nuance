@@ -11,8 +11,8 @@ import yaml
 
 __all__ = ["Theme", "WeaknessesError", "load_themes", "parse_themes"]
 
-# Theme ids become tool-schema enum values, log columns and parts of output names, so
-# they are restricted to a shape that is safe in all three.
+# Theme ids become tool-schema enum values and log column values, so they are
+# restricted to a shape that is safe in both.
 _ID_PATTERN = re.compile(r"[a-z][a-z0-9_]*")
 # Until Product Marketing and Sales Enablement approve an answer, every theme stays a
 # draft with its owner marked for validation (ob-correctness, invariant 5).
@@ -45,10 +45,26 @@ _FIELDS = tuple(f.name for f in fields(Theme))
 def load_themes(path: Path) -> tuple[Theme, ...]:
     """Read a themes file and return its validated themes, in file order."""
     try:
-        data: object = yaml.safe_load(path.read_text(encoding="utf-8"))
-    except yaml.YAMLError as exc:
-        raise WeaknessesError(f"{path}: not valid YAML: {exc}") from exc
+        text = path.read_text(encoding="utf-8")
+        _reject_duplicate_fields(yaml.SafeLoader(text).get_single_node(), str(path))
+        data: object = yaml.safe_load(text)
+    except (UnicodeDecodeError, yaml.YAMLError) as exc:
+        raise WeaknessesError(f"{path}: not valid UTF-8 YAML: {exc}") from exc
     return parse_themes(data, source=str(path))
+
+
+def _reject_duplicate_fields(root: yaml.Node | None, source: str) -> None:
+    # `safe_load` keeps the last of two equal keys, so a pasted second `draft_answer`
+    # would silently replace the first. Checking the composed nodes keeps `safe_load`
+    # as the only constructor.
+    if not isinstance(root, yaml.SequenceNode):
+        return
+    for position, item in enumerate(root.value, start=1):
+        if isinstance(item, yaml.MappingNode):
+            keys = [key.value for key, _ in item.value]
+            duplicate = next((k for i, k in enumerate(keys) if k in keys[:i]), None)
+            if duplicate is not None:
+                raise WeaknessesError(f"{source}: theme #{position}: duplicate field {duplicate!r}")
 
 
 def parse_themes(data: object, *, source: str) -> tuple[Theme, ...]:

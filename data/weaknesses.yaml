@@ -5,8 +5,8 @@
 # proof points are placeholders until a real, approved story replaces them. Every
 # answer is a draft for Product Marketing and Sales Enablement to validate.
 #
-# Loaded and validated by src/objection_brief/weaknesses.py: unique ids, every field
-# present, status draft, owner marked "to validate".
+# Loaded by src/objection_brief/weaknesses.py, which enforces the validation rules in
+# PROJECT-BRIEF.md §6.1.
 
 - id: access_permissions
   label: Complex access permissions

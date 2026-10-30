@@ -130,8 +130,25 @@ def test_entry_must_be_a_mapping() -> None:
     assert _error(["just a string"]) == "themes.yaml: theme #1: expected a mapping of fields"
 
 
-def test_invalid_yaml_names_the_file(tmp_path: Path) -> None:
+@pytest.mark.parametrize("value", [3, True, None])
+def test_non_string_id_names_theme_by_position(value: object) -> None:
+    message = _error([_entry(id=value)])
+    assert message == "themes.yaml: theme #1: field 'id' must be a non-empty string"
+
+
+@pytest.mark.parametrize("content", [b"- id: [unclosed\n", b"- id: caf\xe9\n"])
+def test_unreadable_file_names_the_file(tmp_path: Path, content: bytes) -> None:
     path = tmp_path / "weaknesses.yaml"
-    path.write_text("- id: [unclosed\n", encoding="utf-8")
-    with pytest.raises(WeaknessesError, match=r"weaknesses\.yaml: not valid YAML"):
+    path.write_bytes(content)
+    with pytest.raises(WeaknessesError, match=r"weaknesses\.yaml: not valid UTF-8 YAML"):
+        load_themes(path)
+
+
+def test_repeated_field_in_a_theme_is_rejected(tmp_path: Path) -> None:
+    path = tmp_path / "weaknesses.yaml"
+    path.write_text(
+        "- id: sample_theme\n  draft_answer: First.\n  draft_answer: Second.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(WeaknessesError, match=r"theme #1: duplicate field 'draft_answer'"):
         load_themes(path)
