@@ -3,7 +3,7 @@
 # objection. The eval scores detections after the guardrail against this file
 # (PROJECT-BRIEF.md §6.3, §9).
 
-# Positives: each prospect objection counts once per theme.
+# Positives: each theme is listed once per transcript, however many times it is raised.
 t01_permissions: [access_permissions]
 t02_learning_curve: [learning_curve_non_finance]
 t03_excel_board_pack: [excel_interop]

@@ -2,7 +2,7 @@ REP: Hi Joanna, thanks for joining. I know you're covering for your controller t
 
 PROSPECT: I am, so this is a welcome break from approving invoices.
 
-REP: I'll keep it useful, then. Last time we covered the basics of how Oakhurst Veterinary plans today. I'd like to use today to go through the concerns we usually hear from finance teams, so nothing comes up late.
+REP: I'll keep it useful, then. Last time we covered the basics of how Brackenwyn Veterinary plans today. I'd like to use today to go through the concerns we usually hear from finance teams, so nothing comes up late.
 
 PROSPECT: That sounds sensible. Go ahead.
 
@@ -16,7 +16,7 @@ PROSPECT: Our practice managers are actually quite comfortable with numbers. Mos
 
 REP: That helps. Some teams also tell us they still end up exporting everything to Excel for the board pack.
 
-PROSPECT: We're happy to keep the board slides in Excel. They're short, and our chair likes them the way they are.
+PROSPECT: That doesn't apply to us. Our board slides are short, and our chair is happy with them as they are.
 
 REP: Fair enough. And the last one: some finance teams worry the model gets slow once it grows, with lots of products or entities.
 

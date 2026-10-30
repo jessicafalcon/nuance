@@ -183,7 +183,7 @@ touched, commands run and results, records updated, open risks, next step.
   `tuple[Theme, ...]`, raising `WeaknessesError` that names the theme and field.
 - **Build step 3 (transcripts and labels):** merged (#7). Twelve synthetic transcripts in
   `data/transcripts/` (t01–t08 positives covering all six themes, t07 and t08 with two
-  objections; t09–t12 the four negatives in brief §6.2), one speaker turn per line;
+  themes; t09–t12 the four negatives in brief §6.2), one speaker turn per line;
   `data/labels.yaml` keyed by file stem.
 - **Next:** step 4 on `feat/guardrail`, `guardrail.py` and `tests/test_guardrail.py`
   (brief §7.2, §10).
