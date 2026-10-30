@@ -57,8 +57,8 @@ def test_malformed_labels_are_refused(tmp_path: Path, text: str, message: str) -
         _labels(tmp_path, text)
 
 
-def _detection(theme_id: str, confidence: float = 0.9) -> Detection:
-    return Detection(theme_id, "a quote", Speaker.PROSPECT, confidence)
+def _detection(theme_id: str) -> Detection:
+    return Detection(theme_id, "a quote", Speaker.PROSPECT, 0.9)
 
 
 def _answer(recorded_at: str = "2026-10-30T12:00:00+00:00") -> ModelResult:
@@ -127,13 +127,7 @@ def test_report_explains_every_miss_rejection_and_unusable_answer() -> None:
             "the answer is not JSON (a | b\nc)",
         ),
     ]
-    report = render(
-        "claude-sonnet-5-5",
-        outcomes,
-        THEMES,
-        prices={"claude-sonnet-5-5": (2.0, 10.0)},
-        prices_checked="2026-10-30",
-    )
+    report = render("claude-sonnet-5-5", outcomes, THEMES)
 
     assert report.startswith("# Detection eval: claude-sonnet-5-5\n")
     assert "answers recorded 2026-11-02)" in report
@@ -174,6 +168,5 @@ def test_report_is_saved_only_under_a_pinned_model(tmp_path: Path) -> None:
         save_report("text\n", tmp_path, "../claude-haiku-5-5")
 
 
-def test_every_eval_model_has_a_price_and_the_detect_model_is_one() -> None:
+def test_the_detect_model_is_evaluated() -> None:
     assert config.detect_model in config.eval_models
-    assert set(config.prices_usd_per_mtok) == set(config.eval_models)

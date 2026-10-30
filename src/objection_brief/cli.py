@@ -169,9 +169,6 @@ def _eval(model: str, *, offline: bool) -> int:
         try:
             result = detect(transcript, themes, call=call, model=model)
         except DetectError as error:
-            # `detect` always attaches the answer; without it the report can't count its cost.
-            if error.answer is None:
-                raise
             # A recorded unusable answer is the model's result: scored as finding nothing.
             print(f"{stem}: {error}", file=sys.stderr)
             outcomes.append(evaluate.Outcome(stem, labels[stem], (), (), error.answer, str(error)))

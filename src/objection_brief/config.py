@@ -56,18 +56,18 @@ follow_up_prompt_version: Final = "follow-up-v3"
 follow_up_effort: Final = "low"
 follow_up_max_tokens: Final = 4000
 
-# The models `eval` compares (brief §9). `--model` accepts only these, and each names its
-# report, `reports/eval_<model>.md`.
-eval_models: Final = (detect_model, "claude-sonnet-5-5")
-# USD per million input and output tokens, as Anthropic's pricing page listed them on
-# `prices_checked`; verify against Anthropic's pricing page before quoting a cost.
-# Haiku's price holds for prompts up to 100,000 tokens; a transcript within
-# `max_transcript_bytes` is about 50,000 at most.
+# USD per million input and output tokens for the models `eval` compares (brief §9), as
+# Anthropic's pricing page listed them on `prices_checked`; verify against Anthropic's
+# pricing page before quoting a cost. Haiku's price holds for prompts up to 100,000
+# tokens; a transcript within `max_transcript_bytes` is about 50,000 at most.
 prices_usd_per_mtok: Final = {
-    "claude-haiku-5-5": (0.10, 0.50),
+    detect_model: (0.10, 0.50),
     "claude-sonnet-5-5": (2.00, 10.00),
 }
 prices_checked: Final = "2026-10-30"
+# `--model` accepts only these, so every evaluated model has a price, and each names its
+# report, `reports/eval_<model>.md`.
+eval_models: Final = tuple(prices_usd_per_mtok)
 
 # Per-call limits on the model client, so a hung or failing call can't stall a run.
 request_timeout_s: Final = 60.0

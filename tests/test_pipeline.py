@@ -7,13 +7,18 @@ import shutil
 from pathlib import Path
 
 import pytest
-import yaml
 
 from objection_brief import config, llm
 from objection_brief.cli import main
+from objection_brief.evaluate import load_labels
+from objection_brief.weaknesses import load_themes
 
 REPO = Path(__file__).parents[1]
-LABELS: dict[str, list[str]] = yaml.safe_load((REPO / "data" / "labels.yaml").read_text("utf-8"))
+LABELS = load_labels(
+    REPO / config.labels_file,
+    stems=[p.stem for p in (REPO / config.transcripts_dir).glob("*.txt")],
+    theme_ids=[t.id for t in load_themes(REPO / config.themes_file)],
+)
 # The models whose detection answers are committed; Claude Sonnet 5.5's join after its
 # live run, and from then every model in `config.eval_models`.
 RECORDED_MODELS = ("claude-haiku-5-5",)

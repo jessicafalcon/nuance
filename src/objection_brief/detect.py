@@ -80,7 +80,7 @@ class DetectResult:
 class DetectError(Exception):
     """The answer as a whole is unusable: refused, cut off, or not the expected JSON."""
 
-    def __init__(self, message: str, answer: ModelResult | None = None) -> None:
+    def __init__(self, message: str, answer: ModelResult) -> None:
         super().__init__(message)
         # Set by `detect`, so an unusable answer's tokens and recording date still count
         # in the eval report (brief §9).
@@ -163,7 +163,7 @@ def detect(
         raise DetectError(f"the model stopped with {answer.stop_reason!r}, not 'end_turn'", answer)
     try:
         detections, malformed = parse_objections(answer.output)
-    except DetectError as error:
+    except ValueError as error:
         raise DetectError(str(error), answer) from None
     return DetectResult(detections, malformed, answer)
 
@@ -175,17 +175,18 @@ def parse_objections(output: str) -> tuple[tuple[Detection, ...], tuple[Malforme
     `UNKNOWN_THEME`. A confidence outside [0, 1] is the guardrail's too.
 
     Raises:
-        DetectError: the output isn't a JSON object with an `objections` list.
+        ValueError: the output isn't a JSON object with an `objections` list; `detect`
+            raises it as a `DetectError` carrying the answer.
     """
     try:
         data: Any = json.loads(output)
     except ValueError as error:
-        raise DetectError(f"the answer is not JSON ({error})") from None
+        raise ValueError(f"the answer is not JSON ({error})") from None
     objections: Any = (
         cast("dict[str, Any]", data).get("objections") if isinstance(data, dict) else None
     )
     if not isinstance(objections, list):
-        raise DetectError("the answer has no `objections` list")
+        raise ValueError("the answer has no `objections` list")
     detections: list[Detection] = []
     malformed: list[Malformed] = []
     for item in cast("list[Any]", objections):
