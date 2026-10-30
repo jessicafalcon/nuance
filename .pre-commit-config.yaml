@@ -69,6 +69,14 @@ repos:
         entry: uv run --frozen python .claude/hooks/boundary_guard.py
         language: system
         files: ^src/objection_brief/.*\.py$
+      # Same rules as the Claude Code PostToolUse hook. It reads the whole repo, so it
+      # runs on every commit whatever is staged.
+      - id: docs-guard
+        name: docs guard (records agree)
+        entry: uv run --frozen python .claude/hooks/docs_guard.py --check
+        language: system
+        pass_filenames: false
+        always_run: true
       # Same rules as the Claude Code PreToolUse hook: staged files at pre-commit, the
       # message at commit-msg, every tracked file in CI.
       - id: content-guard
