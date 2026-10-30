@@ -37,7 +37,8 @@ live call fails the test instead of spending money.
 4. **Fake client** for anything that calls out: `detect` and `brief` take a
    `call: ModelCall` (ob-craft), so tests pass a function with `call_model`'s keywords
    (minus `cache` and `api_key`) that returns a recorded answer. `llm` tests replace
-   `llm._send`, the one function that reaches the API. `notify` tests use a fake `post` callable, not the network.
+   `llm._send`, the one function that reaches the API. `notify` tests replace
+   `notify._send`, the one function that reaches Slack.
 
 ## What each module must prove
 
@@ -56,7 +57,7 @@ table adds what §10 doesn't say.
 
 ## Fakes and fixtures
 
-- Fakes are local functions or recorded JSON in `tests/fixtures/`. Never the real API.
+- Fakes are local functions or recorded answers from `data/llm_cache/`. Never the real API.
 - A fake secret is built by concatenation (`"sk-" + "ant-" + "x" * 40`) so no key shape
   appears in the repo; the content guard and gitleaks would block it anyway.
 - Fixed `run_id` and `created_at` values are passed in; nothing reads the clock.
