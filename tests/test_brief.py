@@ -30,13 +30,15 @@ from objection_brief.weaknesses import load_themes
 THEMES = {t.id: t for t in load_themes(Path(__file__).parents[1] / "data" / "weaknesses.yaml")}
 PERMISSIONS = THEMES["access_permissions"]
 QUOTE = "setting up permissions for fifty budget owners sounds like a project in itself"
-DRAFT = (
+# What the model writes, with the slot the code fills with the approved proof...
+RAW = (
     "I understand that scoping access for every budget owner looks like a project. Granular "
     "permissions take deliberate setup, and our role-based templates and guided permissions "
-    "session in onboarding cover most of it. [PLACEHOLDER] customer story: mid-market company "
-    "scoped cost-center access in onboarding. Could we book a 30-minute permissions design "
-    "session with a solutions consultant?"
+    "session in onboarding cover most of it. For example, [PROOF]. Could we book a 30-minute "
+    "permissions design session with a solutions consultant?"
 )
+# ...and what reaches the brief.
+DRAFT = RAW.replace("[PROOF]", PERMISSIONS.proof)
 
 
 def _detection(theme_id: str = "access_permissions", confidence: float = 0.9) -> Detection:
@@ -54,7 +56,7 @@ def _item(quote: str = QUOTE, follow_up: FollowUp | None = None) -> BriefItem:
 class FakeCall:
     """Stands in for `call_model` with its cache bound; keeps the keywords it received."""
 
-    def __init__(self, output: str = DRAFT, stop_reason: str | None = "end_turn") -> None:
+    def __init__(self, output: str = RAW, stop_reason: str | None = "end_turn") -> None:
         self.answer = ModelResult(
             output, stop_reason, Usage(300, 80), "2026-10-30T12:00:00+00:00", True
         )
@@ -123,19 +125,18 @@ def test_quote_goes_only_in_the_user_turn() -> None:
 @pytest.mark.parametrize(
     ("output", "stop_reason", "problem"),
     [
-        (DRAFT, "max_tokens", "stopped with 'max_tokens'"),
-        (DRAFT, "refusal", "stopped with 'refusal'"),
+        (RAW, "max_tokens", "stopped with 'max_tokens'"),
+        (RAW, "refusal", "stopped with 'refusal'"),
         ("   ", "end_turn", "the draft is empty"),
-        (DRAFT.replace("[PLACEHOLDER] ", ""), "end_turn", "doesn't copy the proof word for word"),
+        (RAW.replace("For example, [PROOF].", ""), "end_turn", "has 0 [PROOF] slots, not one"),
+        (RAW + " See [PROOF] again.", "end_turn", "has 2 [PROOF] slots, not one"),
+        # The v2 recordings' failure: the proof's words restated around its marker.
         (
-            DRAFT.replace(
-                "[PLACEHOLDER] customer story: mid-market company scoped cost-center access",
-                "A mid-market company scoped cost-center access: [PLACEHOLDER] customer story",
-            ),
+            RAW.replace("[PROOF]", "one customer story: [PROOF] [placeholder] mid-market company"),
             "end_turn",
-            "doesn't copy the proof word for word",
+            "restates the proof",
         ),
-        (DRAFT + " Teams cut setup time by 40%.", "end_turn", "states '40'"),
+        (RAW + " Teams cut setup time by 40%.", "end_turn", "states '40'"),
     ],
 )
 def test_an_ungrounded_or_unusable_draft_is_withheld_with_its_reason(
@@ -149,9 +150,16 @@ def test_an_ungrounded_or_unusable_draft_is_withheld_with_its_reason(
     assert problem in follow_up.problem
 
 
+def test_the_approved_proof_is_inserted_word_for_word() -> None:
+    follow_up = draft_follow_up(PERMISSIONS, QUOTE, call=FakeCall(), model=config.follow_up_model)
+    assert follow_up.problem is None
+    assert PERMISSIONS.proof in follow_up.text
+    assert "[PROOF]" not in follow_up.text
+
+
 def test_figures_from_the_quote_or_the_approved_points_are_allowed() -> None:
     # "30" is in follow_up_angle; "41" is in the quote.
-    text = DRAFT + " That holds for all 41 stores."
+    text = RAW + " That holds for all 41 stores."
     assert grounding_problem(text, PERMISSIONS, "we have 41 stores") is None
 
 

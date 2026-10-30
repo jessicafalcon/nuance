@@ -176,9 +176,10 @@ Count and report rejections by reason, `malformed_detection` included: one funct
   (the first on a tie). Every detection is still logged (§7.5).
 - Follow-up paragraph: one LLM call per item that may use **only** the matching theme's `draft_answer`, `proof` and `follow_up_angle`, plus the quote. No invented facts, figures or customer names.
   The call uses `config.follow_up_model` (Claude Haiku 5.5) at effort `low` with a plain-text answer; the quote goes in the user turn, as data.
-- The draft is checked in code before it reaches the brief: an answer that stopped for any reason other than `end_turn`,
-  an empty draft, a draft that doesn't copy the proof word for word (case, spacing and quote marks aside), or one that states a figure in digits that isn't in its
-  inputs is withheld, and the brief says why. No answer at all (an offline miss, a failed call) is an error for that transcript.
+- The model writes `[PROOF]` once where the proof goes, and the code puts the approved `proof` there, so the proof
+  always reaches the brief word for word. The draft is checked in code before that: an answer that stopped for any reason
+  other than `end_turn`, an empty draft, one without exactly one `[PROOF]`, one that restates the proof itself (it says
+  `PLACEHOLDER`), or one that states a figure in digits that isn't in its inputs is withheld, and the brief says why. No answer at all (an offline miss, a failed call) is an error for that transcript.
 
 ### 7.4 Notify
 `SLACK_WEBHOOK_URL` set → POST. Otherwise write `out/briefs/<transcript_id>.json` and print a readable preview.
@@ -315,5 +316,5 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 | `RejectReason` lives in `detect.py`, with `malformed_detection` for an item that doesn't parse (§7.1) | `guardrail` already imports `detect`; the reverse would be a cycle. The first module that can reject a detection holds the vocabulary |
 | The brief shows one item per theme, its most confident kept detection; the detection prompt stays as it is (§7.3) | The recorded t01 answer names `access_permissions` twice despite the "at most once" rule. A prompt rule can't guarantee it, so the code handles it either way, and a prompt change before the eval exists (step 7) can't be measured |
 | `guardrail.count_rejections` requires the malformed items (§7.2) | One counter for `run`, `run-all` and the eval, which no caller can call without them |
-| Follow-up drafts are checked in code and withheld with a reason; a missing or failed call fails the transcript; Claude Haiku 5.5 writes them (§7.3) | The prompt asks for grounding, and the proof and figure checks verify part of it at no cost; the first recording reworded a proof around its `[PLACEHOLDER]` marker and proposed times nobody gave, so the prompt forbids both. A missing recording shown as "no draft" would pass CI. Haiku is the smaller option (§14) |
+| Follow-up drafts are checked in code and withheld with a reason; a missing or failed call fails the transcript; Claude Haiku 5.5 writes them (§7.3) | The prompt asks for grounding, and the slot and figure checks verify part of it at no cost. Recorded drafts proposed times nobody gave (follow-up-v1), so the prompt forbids them; asked to copy the proof word for word, the model still reworded it around its `[PLACEHOLDER]` marker in 3 of 10 drafts (follow-up-v2), so the code inserts it instead (follow-up-v3). A missing recording shown as "no draft" would pass CI. Haiku is the smaller option (§14) |
 | Follow-up cost is stated in the README's cost section, not in the eval report (§9, §11) | The eval report scores detection for two models; the follow-up runs only in `run`/`run-all`, on Claude Haiku 5.5 |

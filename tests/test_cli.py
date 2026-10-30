@@ -21,9 +21,8 @@ T01_QUOTE = (
     "cost center sounds like a project in itself."
 )
 FOLLOW_UP = (
-    "Scoping access for fifty budget owners does take deliberate setup. [PLACEHOLDER] customer "
-    "story: mid-market company scoped cost-center access in onboarding. Could we book a "
-    "30-minute permissions design session?"
+    "Scoping access for fifty budget owners does take deliberate setup. For example, [PROOF]. "
+    "Could we book a 30-minute permissions design session?"
 )
 
 
@@ -147,7 +146,13 @@ def test_live_run_logs_writes_and_previews_the_brief(
     brief = json.loads(
         (t01.parents[2] / config.briefs_dir / "t01_permissions.json").read_text("utf-8")
     )
-    assert any(FOLLOW_UP in json.dumps(block) for block in brief["blocks"])
+    proof = (
+        "[PLACEHOLDER] customer story: mid-market company scoped cost-center access in onboarding"
+    )
+    assert any(
+        FOLLOW_UP.replace("[PROOF]", proof) in block.get("text", {}).get("text", "")
+        for block in brief["blocks"]
+    )
     out = capsys.readouterr().out
     assert "brief written to out/briefs/t01_permissions.json" in out
     assert out.rstrip().endswith(FOOTER)
