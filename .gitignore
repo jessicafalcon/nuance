@@ -17,5 +17,5 @@ __pycache__/
 *.pem
 *.key
 
-# Run outputs: briefs, the DuckDB file, eval reports
+# Run outputs: briefs, the DuckDB file
 out/

@@ -70,17 +70,23 @@ a value that never changes, no `utils.py`.
 ## Model calls
 
 - One function, `llm.call_model(*, model, prompt_version, system, messages, tools,
-  tool_choice, max_tokens, cache: Cache) -> ModelResult`, returns the parsed tool input,
-  token usage and whether it was replayed.
+  tool_choice, max_tokens, temperature, cache: Cache) -> ModelResult`, returns the
+  parsed tool input, token usage, `recorded_at` and whether it was replayed.
 - **Replay first** (brief §7.6): the key is `sha256` of canonical JSON
-  (`json.dumps(..., sort_keys=True, separators=(",", ":"))`) of every input above plus
-  `temperature`. `Cache` is a small frozen dataclass: directory, `offline`, `record`.
-  `cli.py` builds it (`--offline`; `record` only for inputs under `data/transcripts/`).
+  (`json.dumps(..., sort_keys=True, separators=(",", ":"))`) of model, prompt version,
+  system, messages, tools, `tool_choice`, `max_tokens` and `temperature`; never `cache`.
+  `Cache` is a small frozen dataclass: directory, `offline`, `record`. `cli.py` builds
+  it (`--offline`; `record` only for a transcript whose resolved path is under
+  `data/transcripts/`).
+- **How it reaches callers:** `detect` and `brief` take a `call: ModelCall` parameter,
+  a `Protocol` in `llm.py` with `call_model`'s keywords minus `cache`. `cli.py` passes
+  `functools.partial(llm.call_model, cache=cache)`; tests pass a fake with the same
+  keywords.
 - Entries are one JSON file per key, written to a temp file and `os.replace`d; a
   corrupt entry is an error naming the file, never a silent re-call.
 - Structured output by **forced tool use** with a JSON schema; `theme_id` and
   `speaker` are `enum`s in the schema, so the model can't invent a value.
-- Pinned model IDs from `config.py`; `temperature=0` for detection.
+- Pinned model IDs and per-call `temperature` from `config.py` (0 for detection).
 - A per-call timeout and bounded retries on the client; `max_tokens` set on every call.
 
 ## SQL and data files

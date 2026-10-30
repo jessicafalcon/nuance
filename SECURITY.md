@@ -19,7 +19,9 @@ a first response within 7 days.
   error message.
 - Transcript text that can change what the tool posts to Slack beyond the verbatim
   quote (prompt injection that bypasses the guardrail, `mrkdwn` injection).
-- Files written outside `out/`, or SQL built from untrusted input.
+- Files written outside `out/`, `data/llm_cache/` and `reports/`, or SQL built from
+  untrusted input.
+- A transcript from outside `data/transcripts/` being recorded in `data/llm_cache/`.
 - Weaknesses in the CI workflow or the repository's checks.
 
 ## How the repository protects itself

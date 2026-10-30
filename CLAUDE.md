@@ -18,7 +18,7 @@ data/                 weaknesses.yaml, synthetic transcripts/, labels.yaml, llm_
 scripts/              report.sql
 reports/              eval_<model>.md, generated offline from data/llm_cache/
 tests/                one file per module, plus tests/hooks/ for the guard hooks
-out/                  gitignored: briefs, the DuckDB file, eval reports
+out/                  gitignored: briefs, the DuckDB file
 .claude/              settings.json, hooks/, skills/, agents/
 .github/              CI workflow, Dependabot, PR template
 ```

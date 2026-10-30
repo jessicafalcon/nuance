@@ -3,8 +3,9 @@ name: ob-tests
 description: >
   The testing standard for objection-brief: offline by construction, the lightest test
   form that proves the behaviour, what each module must prove (guardrail, weaknesses,
-  brief, detect parsing, notify, log, eval metrics, hooks), fakes instead of the API,
-  and fake secrets built by concatenation. Read this BEFORE writing or changing a test,
+  brief, detect parsing, notify, log, eval metrics, the llm replay cache, the offline
+  pipeline, hooks), replay and fakes instead of the API, and fake secrets built by
+  concatenation. Read this BEFORE writing or changing a test,
   or when deciding what a change must prove.
 ---
 
@@ -33,9 +34,9 @@ live call fails the test instead of spending money.
    `test_paraphrased_quote_is_rejected`, `test_rep_speaker_is_rejected`.
 3. **Replay** for the pipeline: end-to-end tests run offline over the committed
    `data/llm_cache/`, the same entries a reader replays.
-4. **Fake client** for anything that calls out: `detect` and `brief` take the model
-   call as a parameter (default `llm.call_model`), so tests pass a function returning
-   a recorded tool input. `notify` tests use a fake `post` callable, not the network.
+4. **Fake client** for anything that calls out: `detect` and `brief` take a
+   `call: ModelCall` (ob-craft), so tests pass a function with `call_model`'s keywords
+   (minus `cache`) that returns a recorded tool input. `notify` tests use a fake `post` callable, not the network.
 
 ## What each module must prove (brief §10 is the floor)
 
@@ -49,7 +50,7 @@ live call fails the test instead of spending money.
 | `log` | Kept and rejected detections both land with the right columns and types |
 | `eval` | Precision and recall on a hand-computed example, including a theme with no positives |
 | `llm` | Key stable across runs and changed by each input; a hit makes no call; an offline miss raises; inputs outside `data/transcripts/` never recorded; no entry contains the API key |
-| pipeline | `run-all --offline` and `eval --offline` over the committed cache, run twice: identical briefs and reports, and the reports equal the committed `reports/` files |
+| pipeline (`test_pipeline.py`) | `run-all --offline` and both `eval --offline` runs over the committed cache, twice: identical briefs and reports, reports equal the committed `reports/` files, no cache entry left unread |
 | hooks | Every block and allow rule (tests/hooks/) |
 
 ## Fakes and fixtures

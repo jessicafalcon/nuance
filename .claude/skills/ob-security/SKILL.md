@@ -82,6 +82,11 @@ characters per text field) by truncating, never by dropping the footer.
   and checked to stay under `out_dir`.
 - Transcript input has a size cap (e.g. 200 KB) before it is read into a prompt.
 - Writes go to a temp file and `os.replace` so a crash never leaves a half brief.
+- The tool writes only under `out/`, `data/llm_cache/` and `reports/`. A cache file is
+  named by its 64-hex `sha256` key alone; a report by a `--model` value checked
+  against the IDs pinned in `config.py`, never the raw argument.
+- Recording checks the transcript's resolved path (symlinks followed) is under
+  `data/transcripts/`.
 
 ### SQL
 
@@ -131,7 +136,8 @@ For each item, report pass, finding (with `path:line`), or not applicable:
 3. Untrusted text (transcript, model output) interpolated into a prompt's system turn,
    a Slack `mrkdwn` field without escaping, a file path, or SQL?
 4. Model output used without schema validation and the guardrail?
-5. Files written outside `out/`, or named from unvalidated input?
+5. Files written outside `out/`, `data/llm_cache/` and `reports/`, or named from
+   unvalidated input?
 6. New dependency, action or tool: approved, locked, pinned by hash or SHA?
 7. Workflow changes: permissions, triggers, interpolation, credentials?
 8. Real vendor, customer, person or review text anywhere, cache entries included?

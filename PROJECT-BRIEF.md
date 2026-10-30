@@ -81,6 +81,8 @@ nuance/                        # GitHub repo; package objection_brief, CLI objec
 ├── reports/                   # eval_<model>.md, generated offline from llm_cache/ (§9)
 ├── tests/
 │   ├── hooks/                 # tests for the guard hooks
+│   ├── test_llm.py
+│   ├── test_pipeline.py
 │   ├── test_guardrail.py
 │   ├── test_weaknesses.py
 │   └── test_brief.py
@@ -180,13 +182,15 @@ Every model call goes through `llm.call_model()`, which reads and writes a respo
 - **Key:** `sha256` of the canonical JSON (sorted keys, no whitespace) of model ID, prompt version, system prompt,
   messages, tool schema, `tool_choice`, `max_tokens` and `temperature`. Prompt versions are constants in `config.py`;
   any change to a prompt's text bumps its version.
-- **Entry:** `data/llm_cache/<key>.json` holds the key's inputs, the parsed tool input, `stop_reason` and token usage,
-  written atomically. Never the API key or any header.
+- **Entry:** `data/llm_cache/<key>.json` holds the key's inputs, the parsed tool input, `stop_reason`, token usage
+  and `recorded_at` (UTC, set when the live call returns), written atomically. Never the API key or any header.
 - **Modes:** default: a hit replays, a miss calls the API and records the entry. `--offline`: a miss is an error
-  naming the transcript and the key; no call is made. CI and tests are always offline.
-- **Privacy:** entries are recorded only for transcripts under `data/transcripts/`; any other input is called live
-  and never written, so a real transcript can't reach the committed cache.
-- **Hygiene:** an offline run reports cache entries it didn't read; a PR that changes a prompt deletes the stale ones.
+  naming the key and prompt version, which `cli.py` reports with the transcript ID; no call is made. CI and tests
+  are always offline.
+- **Privacy:** entries are recorded only for transcripts whose resolved path (symlinks followed) is under
+  `data/transcripts/`, which holds only synthetic transcripts; any other input is called live and never written.
+- **Hygiene:** `test_pipeline.py` fails on a cache entry that no `run-all` or `eval` reads, so a PR that changes a
+  prompt deletes the stale entries.
 - **Cost:** replayed calls report the recorded token usage, so offline cost figures equal the live ones.
 
 ## 8. CLI
@@ -196,19 +200,22 @@ uv run objection-brief run data/transcripts/t01_permissions.txt   # detect → g
 uv run objection-brief run-all                                     # every transcript
 uv run objection-brief eval --model claude-haiku-5-5               # metrics vs labels.yaml
 uv run objection-brief eval --model claude-sonnet-5-5
-uv run objection-brief run-all --offline                           # replay only; a cache miss is an error (CI)
+uv run objection-brief run-all --offline                           # replay only; a cache miss is an error
 uv run objection-brief eval --model claude-haiku-5-5 --offline
+uv run objection-brief eval --model claude-sonnet-5-5 --offline
 ```
 
 ## 9. Evaluation
 
-`eval` prints and saves `reports/eval_<model>.md` (committed) with:
+`eval` prints and saves `reports/eval_<model>.md` (committed; `--model` accepts only the IDs pinned in `config.py`) with:
+- the model, and the date its responses were recorded (the latest `recorded_at` among the entries read)
 - precision and recall per theme and overall (after guardrail)
 - guardrail rejections by reason
 - total tokens and estimated cost (price constants in `config.py`, marked "verify against Anthropic's pricing page")
 
-The report is generated from the cache, so `eval --offline` reproduces it byte for byte; CI regenerates it and fails
-if it differs from the committed file. The README quotes only these reports, with model and date.
+The report is generated from the cache and reads no clock, so `eval --offline` reproduces it byte for byte;
+`test_pipeline.py` regenerates it in CI and fails if it differs from the committed file. The README quotes only
+these reports, with the model and the recorded date they state.
 
 Note in the README that the test set is small and synthetic, so the numbers show the method works, not real-world accuracy.
 
@@ -220,8 +227,9 @@ Note in the README that the test set is small and synthetic, so the numbers show
 
 - `test_llm.py`: the cache key is stable and changes with each input; a hit replays without a call; an offline miss
   raises; an input outside `data/transcripts/` is never recorded; an entry never contains the API key
-- `test_pipeline.py`: `run-all --offline` and `eval --offline` over the committed cache, twice, give identical briefs
-  and reports
+- `test_pipeline.py` (in pytest, which CI runs) replays `run-all --offline` and both `eval --offline` runs over
+  the committed cache, twice: identical briefs and reports, reports equal to the committed `reports/` files, and
+  no cache entry left unread
 
 Tests must not call the API.
 
@@ -245,15 +253,15 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 - [ ] 3. Synthetic transcripts + `labels.yaml` → **checkpoint:** I review them before continuing
 - [ ] 4. `guardrail.py` + tests → **checkpoint:** tests pass
 - [ ] 5. `llm.py` (with the replay cache, §7.6) + `detect.py` → **checkpoint:** run live on 2 transcripts, inspect raw JSON, commit their cache entries; the same run with `--offline` makes no call
-- [ ] 6. `brief.py`, `notify.py`, `log.py` + tests → **checkpoint:** `run-all` produces briefs in `out/briefs/`; the cache covers every transcript and CI runs `run-all --offline`
-- [ ] 7. `eval` for both models → **checkpoint:** `reports/eval_<model>.md` committed; CI regenerates both with `--offline` and they match
+- [ ] 6. `brief.py`, `notify.py`, `log.py` + tests → **checkpoint:** `run-all` produces briefs in `out/briefs/`; the cache covers every transcript and `test_pipeline.py` replays `run-all --offline`
+- [ ] 7. `eval` for both models → **checkpoint:** `reports/eval_<model>.md` committed for both; `test_pipeline.py` regenerates them offline and they match
 - [ ] 8. README → **checkpoint:** final review
 
 ## 13. Acceptance criteria
 
 - `run-all` produces a brief for every positive transcript and none for the four negatives (or explains any miss in the eval report)
 - All tests pass without network access
-- Eval report exists for both models, with cost, in `reports/`, and CI reproduces it offline from `data/llm_cache/`
+- Eval report exists for both models, with cost, in `reports/`, and `test_pipeline.py` reproduces it offline from `data/llm_cache/` in CI
 - No real vendor, customer or person named anywhere (`grep` check before finishing)
 - README follows section 11 and states the limitations plainly
 
@@ -273,6 +281,8 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 | Secrets load with `uv run --env-file .env`; `python-dotenv` dropped | No code ever reads `.env`, one dependency fewer |
 | Model calls live in `llm.py` behind `call_model()` | §4's "one function" needs one home shared by `detect.py` and `brief.py`; a hook enforces it |
 | Model responses are recorded in a committed cache and replayed; `--offline` makes a miss an error; eval reports are committed in `reports/` | CI has no API key, so without replay the pipeline is never tested end to end and the README's numbers can't be reproduced or checked |
+| A report's date is the latest `recorded_at` among the cache entries it read | The report reads no clock, so it reproduces byte for byte and still states when its answers were produced |
+| The offline pipeline check runs inside pytest (`test_pipeline.py`), not as separate CI steps | One mechanism that runs the same locally, at pre-push and in CI |
 | Dev tooling: ruff, pyright, pre-commit, pytest-socket; gitleaks, zizmor and `uv audit` (native to uv, used instead of pip-audit) | The repo is public: secrets, workflow and dependency checks run at commit, push and in CI |
 | Real vendor names are blocked by SHA-256 digest (`.claude/hooks/banned-terms.sha256`) | The hard rule is checked in hooks and CI without the repo naming any vendor |
 | Python 3.12 | Within §4's 3.11+; the version CI tests |
