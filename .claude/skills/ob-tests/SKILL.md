@@ -43,7 +43,7 @@ live call fails the test instead of spending money.
 | Module | Must prove |
 |---|---|
 | `guardrail` | Whitespace/case/curly-quote differences pass; paraphrase fails; rep and unknown speaker fail; confidence below threshold fails; unknown theme fails; each rejection carries its reason |
-| `weaknesses` | YAML loads; IDs unique; every field present; `status: draft`; a broken file fails with the theme and field named |
+| `weaknesses` | YAML loads; each validation rule in brief §6.1 fails with the theme and field named |
 | `brief` | Block Kit has the five elements and the footer; `<`, `>`, `&` and `<!channel>` in a quote are escaped; long text truncates but the footer survives |
 | `detect` | A recorded tool input parses into `Detection`s; a missing field or an out-of-enum value becomes a recorded rejection, not an exception |
 | `notify` | No webhook → file under `out/briefs/` with a validated name; webhook error → `NotifyError` whose message has no URL |

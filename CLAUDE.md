@@ -123,6 +123,7 @@ code or a record is right, they mark it **decide** and the maintainer chooses.
 | `git-guard` | Before every Bash call | Blocked: check bypasses, force push, push to `main`, `git add -f`, `.env` reads (search with `git grep` or `rg`, never `grep -r`), secret expansion, env dumps, `gh repo` admin, mutating `gh api`, `merge --admin`. GitHub settings changes are the maintainer's: give them the exact command to run with `!` |
 | `ruff-on-edit` | After editing a `*.py` file | Fix any unresolved lint it prints before the next edit |
 | `boundary-guard` | After editing `src/objection_brief/*.py`; pre-commit | Move the import or environment read into its owner (ob-craft module map) |
+| `docs-guard` | After editing a `*.md`, a file in `.claude/hooks/`, `pyproject.toml`, `.pre-commit-config.yaml` or the CI workflow; pre-commit | The records disagree on a build step, a pinned version or a tool table. Update every record it names; mid-update this is expected |
 | `reviewer_bash_allowlist` | Every Bash call; enforced only for the two review agents | Keeps them read-only; also registered in each agent's frontmatter with `--enforce` |
 
 ## Records: every change updates its owner in the same PR
@@ -139,6 +140,10 @@ code or a record is right, they mark it **decide** and the maintainer chooses.
 - **A decision is taken:** one line in brief §15 (decision, reason), written into every
   section it affects as the current design.
 - **A command, threshold, hook or skill changes:** update every record that states it.
+- **State a fact once,** in its owner; other documents point to it ("the rules in brief
+  §6.1"). `docs-guard` checks the facts that must repeat: build-step state, pinned tool
+  versions, and the CLAUDE.md skill, agent and hook tables (the checked copy; other
+  lists of tools are left to review).
 - **Code and a record disagree** and it's unclear which is right: ask the maintainer.
 
 ## Git
@@ -170,8 +175,12 @@ touched, commands run and results, records updated, open risks, next step.
 
 ## Current status
 
-- **Build step 1 (scaffold and tooling):** on branch `build/tooling-and-ci`, PR open.
-  `uv run pytest` runs the hook tests; no pipeline code yet.
-- **Next step:** after the merge, `feat/weaknesses` (brief §12 step 2): `pyyaml`,
-  `data/weaknesses.yaml` with the six themes, `weaknesses.py`, `tests/test_weaknesses.py`.
+- **Build step 1 (scaffold, security hooks, CI, replay rules):** merged (#1). The repo is
+  public; branch protection on `main` requires the `check`, `secrets`, `content` and
+  `audit` jobs; secret-scanning push protection and Dependabot are on.
+- **Build step 2 (themes and loader):** merged (#4). `data/weaknesses.yaml` with the six
+  themes (brief §6.1, all `draft`, placeholder proofs); `weaknesses.load_themes` →
+  `tuple[Theme, ...]`, raising `WeaknessesError` that names the theme and field.
+- **Next:** step 3 on `feat/transcripts`, synthetic transcripts and `labels.yaml`, which
+  wait for the maintainer's review before step 4.
 - **Open decisions:** none.

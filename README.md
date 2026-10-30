@@ -10,13 +10,13 @@ transcripts are synthetic. No real vendor, customer or person appears in this re
 
 ## Status
 
-**In development: build step 1 of 8 is done (repository scaffold and checks). There is
-no pipeline code yet, so the tool cannot be run.**
+**In development: the table below shows which build steps are merged. There is no
+pipeline yet, so the tool cannot be run.**
 
 | Step | Scope | State |
 |---|---|---|
-| 1 | Scaffold, security hooks, CI | Done, in review |
-| 2 | Objection themes (`weaknesses.yaml`) and loader | Not started |
+| 1 | Scaffold, security hooks, CI | Done |
+| 2 | Objection themes (`weaknesses.yaml`) and loader | Done |
 | 3 | Synthetic transcripts and labels | Not started |
 | 4 | Guardrail (verbatim quote, speaker, confidence) | Not started |
 | 5 | Detection through the Anthropic API | Not started |
@@ -70,7 +70,8 @@ The repository is public, so checks run before anything leaves a machine and aga
 
 - **Commit:** gitleaks and a content check for API keys, webhook URLs and real vendor
   names (matched by SHA-256 digest, so the list itself names no one); ruff with security
-  rules; pyright; workflow lint (zizmor).
+  rules; pyright; workflow lint (zizmor); and a records check that the build status,
+  pinned tool versions and tool lists agree across the documents.
 - **Push:** the test suite; gitleaks and the content check over the full history,
   commit messages included; and `uv audit` on the locked dependencies.
 - **CI:** all of the above on every pull request, plus the PR title and body, with no

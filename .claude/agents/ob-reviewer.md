@@ -46,7 +46,9 @@ Build your picture from the code and the brief, not from the author's summary.
   work the step requires that is missing.
 - **Does what it claims.** For each claim, find the code and the test that would fail
   without it. A claim with no code is false; with no test, unverified.
-- **Records kept.** Using the records map in `CLAUDE.md`: a build step that landed
+- **Records kept.** Run `python3 .claude/hooks/docs_guard.py --check` first; it covers
+  build-step state, pinned versions and the CLAUDE.md tool tables. Then, using the
+  records map in `CLAUDE.md`: a build step that landed
   but isn't ticked in the brief, "Current status" not moved, a new command, hook or
   skill missing from `CLAUDE.md`, a README status that no longer matches, a decision
   not recorded in brief §15.

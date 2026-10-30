@@ -118,7 +118,7 @@ Other themes, same fields:
 - `consolidation_depth` — complex multi-entity consolidation (answer must be honest about limits and suggest a realistic path)
 - `pricing_escalation` — seat-based cost growth and annual price increases
 
-Validation: unique `id`s, all fields present, `status: draft`.
+Validation: unique `id`s in lowercase snake_case (they become schema enum values and log columns), every field present and non-empty, no unknown or repeated fields, `status: draft`, `owner` containing "to validate". A failure names the theme and the field.
 
 ### 6.2 `data/transcripts/`
 
@@ -222,7 +222,7 @@ Note in the README that the test set is small and synthetic, so the numbers show
 ## 10. Tests (pytest)
 
 - `test_guardrail.py`: verbatim match with whitespace/case differences passes; paraphrased quote fails; rep speaker fails; low confidence fails; unknown theme fails
-- `test_weaknesses.py`: YAML loads, ids unique, required fields present
+- `test_weaknesses.py`: YAML loads, ids unique, required fields present; each §6.1 validation rule fails with the theme and field named
 - `test_brief.py`: Block Kit JSON has the five elements and the draft footer
 
 - `test_llm.py`: the cache key is stable and changes with each input; a hit replays without a call; an offline miss
@@ -248,8 +248,8 @@ Tests must not call the API.
 
 One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked when its PR merges.
 
-- [ ] 1. Scaffold repo, `pyproject.toml`, `.env.example`, `.gitignore`, `CLAUDE.md`, security hooks, CI → **checkpoint:** `uv run pytest` runs (only the hook tests so far)
-- [ ] 2. `weaknesses.yaml` + loader + `test_weaknesses.py` → **checkpoint:** tests pass
+- [x] 1. Scaffold repo, `pyproject.toml`, `.env.example`, `.gitignore`, `CLAUDE.md`, security hooks, CI → **checkpoint:** `uv run pytest` runs (only the hook tests so far)
+- [x] 2. `weaknesses.yaml` + loader + `test_weaknesses.py` → **checkpoint:** tests pass
 - [ ] 3. Synthetic transcripts + `labels.yaml` → **checkpoint:** I review them before continuing
 - [ ] 4. `guardrail.py` + tests → **checkpoint:** tests pass
 - [ ] 5. `llm.py` (with the replay cache, §7.6) + `detect.py` → **checkpoint:** run live on 2 transcripts, inspect raw JSON, commit their cache entries; the same run with `--offline` makes no call
@@ -286,3 +286,5 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 | Dev tooling: ruff, pyright, pre-commit, pytest-socket; gitleaks, zizmor and `uv audit` (native to uv, used instead of pip-audit) | The repo is public: secrets, workflow and dependency checks run at commit, push and in CI |
 | Real vendor names are blocked by SHA-256 digest (`.claude/hooks/banned-terms.sha256`) | The hard rule is checked in hooks and CI without the repo naming any vendor |
 | Python 3.12 | Within §4's 3.11+; the version CI tests |
+| Documents state each fact once and point to its owner; `docs-guard` checks the facts that must repeat (build-step state, pinned uv and gitleaks versions, the CLAUDE.md tool tables) after an edit to a record, a hook or a pinned config, and at every commit and PR | A rule restated in several documents drifted when only one was updated; a deterministic check runs everywhere at no model cost, and prose that restates a rule is left to review |
+| Theme validation is stricter than unique ids, all fields and `status: draft`: ids are lowercase snake_case, no field is empty, unknown or repeated, and `owner` contains "to validate" (§6.1) | Ids become schema enum values and log columns; a misspelled or pasted field would otherwise be ignored or silently replace the approved answer; the owner marker keeps every answer visibly unapproved |

@@ -86,8 +86,8 @@ visibly placeholders in the draft.
 
 ## Validate at trust boundaries
 
-- **`weaknesses.yaml`:** unique IDs, every required field, `status: draft`; a bad file
-  fails loading with the theme and field named.
+- **`weaknesses.yaml`:** the validation rules in brief §6.1; a bad file fails loading with
+  the theme and field named.
 - **Model tool output:** parsed into `Detection`s; a missing field, a value outside the
   enum or a confidence outside [0, 1] is a recorded rejection, not an exception.
 - **CLI input:** the transcript path exists, is a `.txt` file and is under a size cap.
