@@ -36,7 +36,7 @@ Every detection is logged so objection frequency by theme can be analysed later.
 
 - Python 3.11+, managed with `uv` (or `pip` + `requirements.txt` if uv unavailable)
 - `anthropic` (Anthropic Python SDK) — detection via structured outputs with a JSON schema
-- Models: `claude-haiku-5-5` for detection (default); `claude-sonnet-5-5` optional for the follow-up draft and for the model comparison in the eval
+- Models: `claude-haiku-5-5` for detection and the follow-up draft; `claude-sonnet-5-5` for the model comparison in the eval
 - `pyyaml`, `duckdb`, `requests`
 - Secrets load with `uv run --env-file .env ...`; no code reads `.env` (§15)
 - Dev only: `pytest`, `pytest-socket` (no network in tests), `ruff`, `pyright`, `pre-commit`; pre-commit also runs gitleaks and zizmor, and `uv audit` checks the lockfile (§15)
@@ -76,17 +76,15 @@ nuance/                        # GitHub repo; package objection_brief, CLI objec
 │   ├── notify.py              # Slack webhook or mock
 │   ├── log.py                 # append detections to DuckDB
 │   ├── evaluate.py            # load labels, score detections, write the eval report
-│   └── cli.py                 # run / eval commands
+│   └── cli.py                 # run / run-all / eval commands
 ├── scripts/
 │   └── report.sql             # objections by theme
 ├── reports/                   # eval_<model>.md, generated offline from llm_cache/ (§9)
 ├── tests/
 │   ├── hooks/                 # tests for the guard hooks
-│   ├── test_llm.py
-│   ├── test_pipeline.py
-│   ├── test_guardrail.py
-│   ├── test_weaknesses.py
-│   └── test_brief.py
+│   ├── test_<module>.py       # one per module in src/objection_brief/
+│   ├── test_data.py           # transcript and label invariants
+│   └── test_pipeline.py       # offline replay of run-all and both evals
 └── out/                       # gitignored: briefs, duckdb file
 ```
 
@@ -131,7 +129,7 @@ Validation: unique `id`s in lowercase snake_case (they become schema enum values
 
 ```yaml
 t01_permissions: [access_permissions]
-t09_no_objection: []
+t12_no_objection: []
 ```
 
 ## 7. Component specs
@@ -332,4 +330,4 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 | `excel_interop.detect_when` keeps its second clause ("expects that reporting layouts will end up rebuilt in spreadsheets anyway") (§6.1) | It can match a neutral remark, but neither eval report (Claude Haiku 5.5, Claude Sonnet 5.5, `detect-v2`) shows a false positive from it, and t03's and t08's positives lean on it; a prompt change is made when a report shows the problem |
 | Untrusted text in a user turn goes through `llm.tagged`, which escapes a closing tag inside it; `detect-v2` and `follow-up-v4` (§7.1, §7.3) | A transcript or quote holding `</transcript>` or `</quote>` would end its block early and read as instructions. Only the tag is escaped, so every other character stays verbatim and quotes still match; a quote of the escaped tag fails the guardrail. Fixed before the Claude Sonnet 5.5 recording so its answers are recorded once |
 | An answer unusable as a whole is scored as finding nothing, with its tokens counted; a missing recording or a failed call writes no report (§9) | A refusal is the model's result and counts against it; a cache miss or an outage is not, and a report scored on part of the test set would understate the misses |
-| The README's weekly cost assumes 500 calls a week, at the synthetic transcripts' length and at 10,000 input tokens per call (§11) | Neither the team's call volume nor real call length is known; stating both inputs lets a reader redo the estimate |
+| The README's weekly cost assumes 500 calls a week, at the synthetic transcripts' length and at 10,000 input tokens per call, and one kept theme per call for the follow-up (§11) | Neither the team's call volume, real call length nor objection rate is known; stating the inputs lets a reader redo the estimate |

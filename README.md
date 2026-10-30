@@ -27,17 +27,21 @@ hypothesis behind it has not been tested with a sales team (see [Validation plan
 
 The plan, scope and component specs are in [PROJECT-BRIEF.md](PROJECT-BRIEF.md).
 
-What can be built on top of it, without changing the pipeline's shape:
+What can be built on top of it, and what each step involves:
 
-- **Objection frequency by theme.** Every detection, kept or rejected, is already logged
-  to DuckDB; [`scripts/report.sql`](scripts/report.sql) counts them by theme.
-- **A voice-of-customer feed for Product.** The same log, read by theme and over time,
-  shows which weaknesses prospects raise most.
-- **More themes.** A theme is an entry in [`data/weaknesses.yaml`](data/weaknesses.yaml);
-  the detection schema takes its theme ids from that file, so no code changes. The prompt
-  changes with it, so every recorded answer is re-recorded and the labels gain the theme.
-- **Approved content.** Product Marketing and Sales Enablement replace the draft answers
-  and placeholder proof points once they validate them; the briefs pick them up as they are.
+- **A voice-of-customer feed for Product.** Every detection, kept or rejected, is logged
+  to DuckDB, and [`scripts/report.sql`](scripts/report.sql) already counts them by theme.
+  The same table, read over time, shows which weaknesses prospects raise most.
+- **More themes.** A theme is an entry in [`data/weaknesses.yaml`](data/weaknesses.yaml),
+  and the detection schema takes its theme ids from that file. A new theme also needs a
+  positive transcript labelled with it (the data tests pin the transcript counts, so they
+  change too) and new detection recordings for both models. One brief holds at most
+  eight themes within Slack's block limit.
+- **Approved content.** Once Product Marketing and Sales Enablement validate an answer and
+  a real proof point, using them takes code changes as well: the loader accepts only
+  `status: draft` themes, the brief labels every answer a draft, and the check that a
+  follow-up doesn't restate the proof looks for the `[PLACEHOLDER]` marker. The
+  follow-up answers are then re-recorded with the new text.
 
 Running it on real calls (a call-recorder trigger, a queue, a warehouse table) is
 described under [Production path](#production-path).
@@ -66,9 +70,9 @@ vendor or reviewer, and no review text is quoted.
 | Complex access permissions | Setting up who sees what, such as budget owners seeing only their own cost center, takes significant effort or vendor help |
 | Steep learning curve outside finance | People outside finance can't build or change models without consultants or a central admin |
 | Excel and spreadsheet round-trips | Moving data to and from spreadsheets is painful, and reporting layouts end up rebuilt in Excel |
-| Performance at scale | Large models are slow to recalculate or time out |
-| Consolidation depth | Complex multi-entity consolidation (partial ownership, several accounting standards) is beyond the planning tool |
-| Pricing escalation | Per-seat costs grow with adoption, and annual or renewal increases are hard to forecast |
+| Slow performance on large models | Large models are slow to recalculate or time out |
+| Limits on complex multi-entity consolidation | Complex multi-entity consolidation (partial ownership, several accounting standards) is beyond the planning tool |
+| Seat-based cost growth and annual price increases | Per-seat costs grow with adoption, and annual or renewal increases are hard to forecast |
 
 The themes come from reading reviews, not from counting them: they say which complaints
 recur, not how often.
@@ -95,9 +99,9 @@ drafts the paragraph; the answer and the proof come from the file.
 
 ### Example brief
 
-The brief for `t01_permissions`, as `run-all --offline` writes it to
-`out/briefs/t01_permissions.json` (Slack Block Kit; the header, divider and some keys are
-left out here):
+The brief for `t01_permissions`, from the Slack Block Kit message `run-all --offline`
+writes to `out/briefs/t01_permissions.json`. Shown here: its `blocks`, without the
+header, the divider and each block's `"verbatim": true`.
 
 ```json
 [
@@ -201,8 +205,8 @@ per call (172 tokens on Claude Haiku 5.5, 77 on Claude Sonnet 5.5).
 **Follow-up, one call per kept theme, on Claude Haiku 5.5.** The 10 committed
 `follow-up-v4` answers used 5,599 input and 2,063 output tokens: $0.0016 in all, about
 $0.00016 per kept theme or $0.16 per 1,000. Its input is the theme's approved points and
-the quote, not the transcript, so a longer call doesn't change it. At one kept theme per
-call, 500 calls a week add $0.08.
+the quote, not the transcript, so a longer call doesn't change it. Assuming one kept
+theme per call (the synthetic set averages 10 in 12), 500 calls a week add $0.08.
 
 `run` and `run-all` use Claude Haiku 5.5 for both calls; Claude Sonnet 5.5 is evaluated
 for detection only.
@@ -218,8 +222,9 @@ for detection only.
 - **English only.** The themes, prompts and transcripts are in English; other languages
   are untested.
 - **Partial follow-up checks.** The code checks that a draft has one proof slot, doesn't
-  restate the proof, and states no figure missing from the approved points or the quote.
-  It doesn't check every claim; the account executive does.
+  restate the proof, and states no figure in digits missing from the approved points or
+  the quote. Figures in words and other claims are left to the prompt and to the account
+  executive.
 - **Confidence is the model's own.** The 0.6 threshold filters on a number the model
   reports about itself, not a calibrated probability.
 - **Slack delivery is untested live.** The webhook path is tested with fakes; without a

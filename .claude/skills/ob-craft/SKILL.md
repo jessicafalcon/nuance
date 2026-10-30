@@ -11,7 +11,7 @@ description: >
 
 # ob-craft
 
-objection-brief is one pipeline, `transcript → detect → guardrail → brief → notify → log`,
+objection-brief is one pipeline, `transcript → detect → guardrail → log → brief → notify`,
 small on purpose: a few typed functions, each in the module that owns its job, with
 the model, Slack and DuckDB at the edges.
 
