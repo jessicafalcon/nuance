@@ -56,6 +56,26 @@ def test_offline_miss_is_reported_with_the_transcript_id(
     assert f"(prompt {config.detect_prompt_version})" in err
 
 
+@pytest.mark.parametrize(
+    ("stem", "summary"),
+    [("t01_permissions", "2 kept, 0 rejected"), ("t11_rep_raised_objection", "0 kept, 0 rejected")],
+)
+def test_recorded_answers_replay_offline_without_writing(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], stem: str, summary: str
+) -> None:
+    # The step 5 checkpoint (brief §12): the committed entries replay with no call, which
+    # pytest-socket would fail, and no new entry.
+    monkeypatch.chdir(REPO)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    entries = sorted((REPO / "data" / "llm_cache").iterdir())
+
+    assert main(["run", f"data/transcripts/{stem}.txt", "--offline"]) == 0
+    out = capsys.readouterr().out
+    assert out.startswith(f"{stem}: {config.detect_model}, replayed, recorded 2026-10-30")
+    assert out.rstrip().endswith(summary)
+    assert sorted((REPO / "data" / "llm_cache").iterdir()) == entries
+
+
 def test_live_run_without_a_key_says_how_to_load_it(
     repo: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
