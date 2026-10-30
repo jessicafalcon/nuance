@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import io
 import json
+import subprocess
+import sys
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -20,6 +22,8 @@ FAKE_SECRETS = {
     "AWS access key": "AK" + "IA" + "ABCDEFGHIJKLMNOP",
     "private key": "-----BEGIN RSA " + "PRIVATE KEY-----",
     "filled-in .env variable": "ANTHROPIC_API_KEY" + "=abcd1234efgh5678",
+    "Google API key": "AI" + "za" + "B" * 35,
+    "API key (sk-)": "sk-" + "proj-" + "c3D4" * 10,
 }
 TERM = "northwind planning"  # the fictional company stands in for a vendor name
 DIGESTS = frozenset({cg.phrase_digest(TERM)})
@@ -154,3 +158,78 @@ def test_file_mode_flags_a_staged_file(tmp_path: Path, capsys: pytest.CaptureFix
 def test_hash_term_prints_the_digest(capsys: pytest.CaptureFixture[str]) -> None:
     assert cg.main(["--hash-term", "Northwind Planning"]) == 0
     assert capsys.readouterr().out.strip() == cg.phrase_digest(TERM)
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "gh pr new --title t --body-file {d}/body.md",
+        "gh issue new --title t --body-file {d}/body.md",
+        "git -C {d} commit -F body.md",
+        "git commit --file={d}/body.md",
+        "git tag v1 -F {d}/body.md",
+        "git notes add --file {d}/body.md",
+        "gh release create v1 --notes-file {d}/body.md",
+        "git commit -m \"$(cat <<'EOF'\nfeat: x\n\nUnlike Northwind Planning.\nEOF\n)\"",
+    ],
+)
+def test_every_publishing_form_is_read(
+    command: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "body.md").write_text("Compared with Northwind Planning.", encoding="utf-8")
+    assert _hook("Bash", {"command": command.format(d=tmp_path)}, tmp_path, monkeypatch) == 2
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        'gh pr create --title t --body "$(cat /tmp/body.md)"',
+        'git commit -m "`cat msg.txt`"',
+        "cat /tmp/b.md | gh pr create -t t --body-file - && cat <<'EOF'\nx\nEOF",
+        "gh pr create -t t --body-file - < /tmp/b.md",
+        "echo '<<EOF'\ngh pr create --title t --body-file missing.md\nEOF",
+    ],
+)
+def test_text_the_guard_cannot_see_is_blocked(
+    command: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert _hook("Bash", {"command": command}, tmp_path, monkeypatch) == 2
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "git commit -m \"$(cat <<'EOF'\nfeat: add the loader\n\nIt's typed.\nEOF\n)\"",
+        "git commit -F - <<'EOF'\nfeat: add the loader\nEOF",
+        "git add -A && git commit -q -F - <<'EOF'\nfeat: x\nEOF\ngit log --oneline | head -4",
+        "gh pr create --title 't' --body-file - <<'EOF'\n## Summary\nEOF",
+        "git commit -m 'use `uv run` here'",
+    ],
+)
+def test_visible_clean_text_passes(
+    command: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert _hook("Bash", {"command": command}, tmp_path, monkeypatch) == 0
+
+
+def test_hook_checks_notebook_cells(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tool_input = {
+        "file_path": str(tmp_path / "n.ipynb"),
+        "new_source": FAKE_SECRETS["AWS access key"],
+    }
+    assert _hook("NotebookEdit", tool_input, tmp_path, monkeypatch) == 2
+
+
+def test_history_mode_scans_the_git_log(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cg, "load_digests", lambda: DIGESTS)
+    monkeypatch.setattr(cg, "git_history", lambda root: "commit\n\nfeat: beat Northwind Planning\n")
+    assert cg.main(["--history"]) == 1
+    monkeypatch.setattr(cg, "git_history", lambda root: "commit\n\nfeat: add the loader\n")
+    assert cg.main(["--history"]) == 0
+
+
+def test_a_crashing_guard_blocks() -> None:
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, cg.__file__], input="not json", capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 2

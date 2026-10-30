@@ -17,9 +17,14 @@ Entry points:
   terms too, including the files they name with `-F`, `--file`, `--body-file` or
   `--notes-file`. Exits 2 on a hit, when a named file can't be read, or on a crash.
 - pre-commit (`FILE...`): the staged files at the pre-commit stage, the message file at
-  the commit-msg stage, and every tracked file in CI (`pre-commit run --all-files`).
-  Exits 1 on a hit.
+  the commit-msg stage, and every tracked file in CI (`pre-commit run --all-files`);
+  CI also passes the PR title and body as files. Exits 1 on a hit.
+- `--history`: every commit message and diff on every ref (pre-push and CI), so text
+  committed without the hooks, or edited into a squash message on GitHub, is caught.
 - `--hash-term TERM...`: print the digest line(s) to append to `banned-terms.sha256`.
+
+A publishing command whose text the guard can't see (a body from piped stdin, or a
+command substitution other than `$(cat <<'EOF' ... EOF)`) is blocked, not trusted.
 """
 
 from __future__ import annotations
@@ -29,6 +34,7 @@ import json
 import os
 import re
 import shlex
+import subprocess
 import sys
 import unicodedata
 from pathlib import Path
@@ -64,13 +70,80 @@ _W = SHELL_WORD.pattern
 # Only subcommands that publish text. git takes global options before the subcommand.
 PUBLISHING_COMMAND = re.compile(
     rf"\b(git(\s+(-[Cc]\s+{_W}|-[pP]|--[\w-]+((=|\s+){_W})?))*\s+(commit|tag|notes)"
-    r"|gh\s+(pr|issue)\s+(create|edit|comment|review|merge|close)"
+    r"|gh\s+(pr|issue)\s+(create|new|edit|comment|review|merge|close)"
     r"|gh\s+release\s+(create|edit))\b"
 )
-# A heredoc body is text, not words: its quotes need not balance. It is scanned as part
-# of the command; the flag search skips it.
-HEREDOC = re.compile(r"""(<<-?\s*(['"]?)(\w+)\2)([^\n]*)\n.*?^\t*\3$""", re.DOTALL | re.MULTILINE)
+# A heredoc: operator and marker (1), marker quote (2), marker (3), the rest of the
+# marker line (4), body (5). The body is text, not words: its quotes need not balance.
+HEREDOC = re.compile(r"""(<<-?\s*(['"]?)(\w+)\2)([^\n]*)\n(.*?)^\t*\3$""", re.DOTALL | re.MULTILINE)
+# Command substitution, except the `$(cat <<'EOF' ... EOF)` form whose text is inline.
+SUBSTITUTION = re.compile(r"\$\((?!\s*cat\s+<<)|`")
 FILE_FLAGS = ("-F", "--file", "--body-file", "--notes-file")
+
+
+class UncheckableError(Exception):
+    """Published text the guard can't see, so it blocks instead of trusting it."""
+
+
+def quote_at(command: str, end: int) -> str:
+    """The shell quote open at position `end`: `'`, `"` or `` (none).
+
+    `$(` starts a new quoting context, as in the shell, so the heredoc in
+    `git commit -m "$(cat <<'EOF' ...` is unquoted.
+
+    >>> quote_at('echo "a $(cat <<', 16)
+    ''
+    >>> quote_at("echo '<<", 6)
+    "'"
+    """
+    stack: list[str] = []
+    quote = ""
+    i = 0
+    while i < end:
+        c = command[i]
+        if quote == "'":
+            quote = "" if c == "'" else quote
+        elif c == "\\":
+            i += 1
+        elif command.startswith("$(", i):
+            stack.append(quote)
+            quote = ""
+            i += 1
+        elif c == ")" and stack and not quote:
+            quote = stack.pop()
+        elif quote == '"':
+            quote = "" if c == '"' else quote
+        elif c in "'\"":
+            quote = c
+        i += 1
+    return quote
+
+
+def heredocs(command: str) -> list[re.Match[str]]:
+    """Real heredocs: a `<<` inside quotes (`echo '<<EOF'`) is text, not a heredoc."""
+    found: list[re.Match[str]] = []
+    pos = 0
+    while match := HEREDOC.search(command, pos):
+        if quote_at(command, match.start()):
+            pos = match.start() + 2
+        else:
+            found.append(match)
+            pos = match.end()
+    return found
+
+
+def strip_heredocs(command: str) -> str:
+    """The command with each real heredoc body removed; the marker line is kept.
+
+    >>> strip_heredocs("cat <<'EOF' | sh\\necho hi\\nEOF")
+    "cat <<'EOF' | sh"
+    """
+    parts: list[str] = []
+    pos = 0
+    for match in heredocs(command):
+        parts += [command[pos : match.start()], match.group(1), match.group(4)]
+        pos = match.end()
+    return "".join([*parts, command[pos:]])
 
 
 def phrase_digest(phrase: str) -> str:
@@ -140,7 +213,7 @@ def flag_values(command: str, flags: tuple[str, ...]) -> list[str]:
     >>> flag_values('gh pr create -t "use -F x" --body-file=b.md -Fc.md -dF d.md', ("-F", "--body-file"))
     ['b.md', 'c.md', 'd.md']
     """
-    words = SHELL_WORD.findall(HEREDOC.sub(r"\1\4", command))
+    words = SHELL_WORD.findall(strip_heredocs(command))
     short = "".join(f[1] for f in flags if len(f) == 2)
     bundle = re.compile(rf"-[A-Za-z]*?[{short}](.*)") if short else None
     values: list[str] = []
@@ -170,6 +243,24 @@ def read_message_file(name: str, bases: list[Path]) -> str:
     raise FileNotFoundError(2, "cannot read the file to check it", name)
 
 
+def _stdin_hidden(stripped: str) -> bool:
+    """True when a publishing command reads stdin from a pipe or a `<` redirect, text the
+    guard never sees; only a heredoc on the command's own segment is visible.
+
+    >>> _stdin_hidden("git commit -F - <<'EOF' && git log | head")
+    False
+    >>> _stdin_hidden("cat b.md | gh pr create --body-file -")
+    True
+    """
+    for part in re.split(r"&&|\|\||;|\n", stripped):
+        if match := PUBLISHING_COMMAND.search(part):
+            piped = "|" in part[: match.start()]
+            redirected = re.search(r"(?<!<)<(?![<(])", part)
+            if piped or redirected or "<<" not in part:
+                return True
+    return False
+
+
 def texts_to_check(
     tool: str, tool_input: dict[str, object], root: Path, cwd: Path
 ) -> tuple[list[str], list[str]]:
@@ -178,11 +269,13 @@ def texts_to_check(
         command = str(tool_input.get("command") or "")
         if not PUBLISHING_COMMAND.search(command):
             return [command], []
+        stripped = strip_heredocs(command)
+        if any(quote_at(stripped, m.start()) != "'" for m in SUBSTITUTION.finditer(stripped)):
+            raise UncheckableError("a command substitution builds text the guard can't see")
         bases = [cwd, *(cwd / d for d in flag_values(command, ("-C",)))]
         files = flag_values(command, FILE_FLAGS)
-        if "-" in files and not HEREDOC.search(command):
-            # stdin from a pipe or a `<` redirect is text the guard never sees.
-            raise FileNotFoundError(2, "stdin is visible only as a heredoc", "-")
+        if "-" in files and _stdin_hidden(stripped):
+            raise UncheckableError("stdin is visible only as a heredoc, with no pipe or `<`")
         published = [command, *(read_message_file(f, bases) for f in files if f != "-")]
         return published, published
     file_path = str(tool_input.get("file_path") or "")
@@ -198,8 +291,22 @@ def texts_to_check(
         if isinstance(edits, list)
         else []
     )
-    texts = [str(tool_input.get("content") or ""), str(tool_input.get("new_string") or "")]
+    texts = [str(tool_input.get(key) or "") for key in ("content", "new_string", "new_source")]
     return texts + edit_texts, texts + edit_texts
+
+
+def git_history(root: Path) -> str:
+    """Every commit message and diff on every ref, as one text."""
+    # Fixed argument list, no shell: nothing from the payload reaches this call.
+    result = subprocess.run(
+        ["git", "log", "--all", "-p", "--format=%n%B"],  # noqa: S607
+        cwd=root,
+        capture_output=True,
+        text=True,
+        errors="replace",
+        check=True,
+    )
+    return result.stdout
 
 
 def findings(secret_texts: list[str], term_texts: list[str], digests: frozenset[str]) -> list[str]:
@@ -223,6 +330,12 @@ def main(argv: list[str]) -> int:
         return 0
 
     digests = load_digests()
+    if argv == ["--history"]:
+        history = git_history(Path.cwd())
+        if found := findings([history], [history], digests):
+            _report("the git history", found)
+            return 1
+        return 0
     if argv:  # pre-commit: staged files, the commit message file, or every tracked file
         failed = False
         for name in argv:
@@ -246,6 +359,13 @@ def main(argv: list[str]) -> int:
         print(
             f"content-guard: blocked, cannot read {error.filename!r} to check it. Pass an "
             "existing absolute path, or put the text inline (a heredoc for stdin).",
+            file=sys.stderr,
+        )
+        return 2
+    except UncheckableError as error:
+        print(
+            f"content-guard: blocked, {error}. Pass the text inline, with `--body-file` and "
+            "an absolute path, or as `$(cat <<'EOF' ... EOF)`.",
             file=sys.stderr,
         )
         return 2

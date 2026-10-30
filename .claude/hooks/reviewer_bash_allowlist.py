@@ -64,16 +64,31 @@ WRITING_FLAGS = frozenset(
         "--createstub",
         "--writebaseline",
         "--hash-term",
+        # pytest's log and debug files, and its upload of results to a pastebin.
+        "--log-file",
+        "--debug",
+        "--pastebin",
+        "--report-log",
+        # git grep runs the named program on every matching file.
+        "--open-files-in-pager",
     }
 )
-# Short flags that take a value, alone or attached (`-o cache_dir=x`, `-ocache_dir=x`).
-WRITING_SHORT_FLAGS = ("-o", "-c")
+# Short flags that take a value, alone or attached (`-o cache_dir=x`, `-ocache_dir=x`);
+# git grep's `-O<pager>` runs a program.
+WRITING_SHORT_FLAGS = ("-o", "-c", "-O")
 
 
 def _writes(word: str) -> bool:
+    """True for a writing flag, or an abbreviation of one (argparse, git and gh accept
+    unique prefixes: `--log-f=x` is `--log-file=x`), or a short flag bundle carrying one."""
     if word.startswith("--"):
-        return word.partition("=")[0] in WRITING_FLAGS
-    return word in WRITING_FLAGS or word.startswith(WRITING_SHORT_FLAGS)
+        name = word.partition("=")[0]
+        return any(
+            flag == name or (len(name) >= 4 and flag.startswith(name)) for flag in WRITING_FLAGS
+        )
+    return word in WRITING_FLAGS or (
+        word.startswith("-") and any(f[1] in word[1:] for f in WRITING_SHORT_FLAGS)
+    )
 
 
 def is_allowed(command: str) -> bool:

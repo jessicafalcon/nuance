@@ -67,9 +67,10 @@ The repository is public, so checks run before anything leaves a machine and aga
 - **Commit:** gitleaks and a content check for API keys, webhook URLs and real vendor
   names (matched by SHA-256 digest, so the list itself names no one); ruff with security
   rules; pyright; workflow lint (zizmor).
-- **Push:** the test suite, gitleaks over the full history, and `uv audit` on the
-  locked dependencies.
-- **CI:** all of the above on every pull request, with no secrets in the environment.
+- **Push:** the test suite; gitleaks and the content check over the full history,
+  commit messages included; and `uv audit` on the locked dependencies.
+- **CI:** all of the above on every pull request, plus the PR title and body, with no
+  secrets in the environment.
 - **GitHub:** `main` accepts changes only through pull requests with passing checks;
   secret-scanning push protection and Dependabot security updates are on.
 

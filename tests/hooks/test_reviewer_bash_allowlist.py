@@ -41,6 +41,12 @@ def test_checks_are_allowed(command: str) -> None:
         "git -C /tmp diff",
         "gh pr merge 3",
         "rm -rf out",
+        "git grep -Orm TODO",
+        "git grep --open-files-in-pager=rm x",
+        "uv run --frozen pytest --log-file=PROJECT-BRIEF.md",
+        "uv run --frozen pytest --debug=x.log",
+        "uv run --frozen pytest --basete=src",
+        "uv run --frozen pytest --pastebin=all",
     ],
 )
 def test_writes_and_escapes_are_blocked(command: str) -> None:

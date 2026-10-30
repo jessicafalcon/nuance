@@ -24,10 +24,12 @@ a first response within 7 days.
 
 ## How the repository protects itself
 
-Secrets live only in a local, gitignored `.env`. Every commit and push runs secret
-scanning (gitleaks), a content check for key shapes, static security lint (ruff's
-bandit rules) and a dependency vulnerability audit (`uv audit`); CI repeats them on
-every pull request over the full history, with no secrets in its environment.
+Secrets live only in a local, gitignored `.env`. Every commit runs secret scanning
+(gitleaks) on the staged changes, a content check for key shapes and banned names on
+the files and the message, and static security lint (ruff's bandit rules). Every push
+runs the tests, gitleaks and the content check over the full history (messages and
+diffs), and a dependency vulnerability audit (`uv audit`). CI repeats all of it on
+every pull request, plus the PR title and body, with no secrets in its environment.
 `main` accepts changes only through pull requests with passing checks.
 
 ## If you find a leaked credential

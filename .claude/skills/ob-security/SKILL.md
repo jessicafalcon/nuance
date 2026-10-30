@@ -22,12 +22,12 @@ a way to make the tool post something it shouldn't.
 | Layer | When | Catches |
 |---|---|---|
 | `.claude/settings.json` deny | Claude reads or edits `.env` | Claude never opens secrets |
-| `content-guard` (PreToolUse) | Claude writes a file, runs any Bash, or publishes a commit/PR text | Key shapes, filled `.env` variables, banned vendor names |
-| `git-guard` (PreToolUse) | Claude runs Bash | `--no-verify`, `SKIP=`, hooksPath, force push, push to `main`, `git add -f`, staging `.env`/`out/`, reading `.env`, expanding secret variables, dumping the environment, `gh repo edit/delete`, `merge --admin` |
+| `content-guard` (PreToolUse) | Claude writes a file or notebook cell, or runs any Bash | Key shapes and filled `.env` variables everywhere; banned vendor names in written files and in published text (commit, tag, PR, issue, release, with their `-F`/`--body-file` files). Blocks published text it can't see (piped stdin, command substitution) |
+| `git-guard` (PreToolUse) | Claude runs Bash | `--no-verify` (abbreviated too), `SKIP=`/`GIT_CONFIG_*`, hooksPath, `.git/hooks`, force push (bundled or abbreviated), push to `main`, `git add -f`, staging `.env`/`out/`, naming `.env` in any word or glob, recursive `grep`, expanding secret variables, dumping the environment, `gh auth token`, `gh repo` admin, mutating `gh api`, `merge --admin`; unwraps `env`, `sh -c`, `eval`, substitutions and heredocs fed to a shell |
 | `boundary-guard` (PostToolUse + pre-commit) | A file in `src/objection_brief/` changes | `anthropic`/`requests`/`duckdb`/`os.environ` outside their owner; `dotenv` anywhere |
 | pre-commit (commit) | Every commit, by anyone | gitleaks on staged changes, `detect-private-key`, content guard on files and the message, ruff `S` rules, zizmor on workflows, large files |
-| pre-commit (push) | Every push | pytest, gitleaks over the full history, `uv audit` |
-| CI (`check`, `secrets`, `audit`) | Every PR and push to `main` | All of the above on every tracked file and the whole history, with no secrets in the environment |
+| pre-commit (push) | Every push | pytest, gitleaks and the content guard over the full history (messages and diffs), `uv audit` |
+| CI (`check`, `secrets`, `content`, `audit`) | Every PR (and title/body edit) and push to `main` | pre-commit on every tracked file; gitleaks and the content guard over the whole history; the PR title and body; `uv audit`; no secrets in the environment |
 | GitHub settings | Server side | Branch protection on `main` (PR + green CI required, no force push), secret-scanning push protection, Dependabot alerts and security updates, private vulnerability reporting |
 
 Local hooks can be bypassed by anyone with a shell; CI and the GitHub settings can't
@@ -97,8 +97,8 @@ or file names. `scripts/report.sql` is static.
 - Dependencies are locked with hashes in `uv.lock`; CI installs with `uv sync --locked`.
 - New dependencies need the maintainer's approval (brief §14); prefer the stdlib.
 - `uv audit` at push and in CI; Dependabot with a 7-day cooldown for routine updates.
-- Actions are pinned by full commit SHA with the version in a comment; zizmor lints
-  the workflows.
+- Actions and pre-commit hook repos are pinned by full commit SHA with the version in
+  a comment; zizmor lints the workflows.
 
 ### CI
 

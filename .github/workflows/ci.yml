@@ -4,14 +4,17 @@ on:
   push:
     branches: [main]
   pull_request:
+    # `edited`: a changed PR title or body is checked again by the `content` job.
+    types: [opened, synchronize, reopened, edited]
 
 # Read-only token and no secrets: an accidental live call to the Anthropic API or Slack
 # fails for lack of credentials, and pytest blocks sockets on top of that.
 permissions: {}
 
+# A newer push to a PR supersedes its older run; every commit on main finishes its run.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:
@@ -67,6 +70,31 @@ jobs:
 
       - name: Scan full history for secrets
         run: gitleaks git --redact --verbose .
+
+  # Secrets and banned terms in what the public reads besides files: every commit message
+  # and diff in the history (including a squash message edited on GitHub), and the PR
+  # title and body. Those arrive through `env:`, never interpolated into the script.
+  content:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan every commit message and diff
+        run: python3 .claude/hooks/content_guard.py --history
+      - name: Scan the PR title and body
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s\n' "$PR_TITLE" > "$RUNNER_TEMP/pr_title.txt"
+          printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr_body.txt"
+          python3 .claude/hooks/content_guard.py "$RUNNER_TEMP/pr_title.txt" "$RUNNER_TEMP/pr_body.txt"
 
   audit:
     runs-on: ubuntu-24.04
