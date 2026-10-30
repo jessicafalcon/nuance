@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
-from objection_brief import brief, config, guardrail, llm, log, notify
+from objection_brief import brief, config, evaluate, guardrail, llm, log, notify
 from objection_brief.detect import DetectError, DetectResult, RejectReason, detect
 from objection_brief.guardrail import Verdict
 from objection_brief.weaknesses import Theme, WeaknessesError, load_themes
@@ -46,7 +46,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     commands.add_parser(
         "run-all", parents=[offline], help=f"run every transcript in {config.transcripts_dir}/"
     )
+    evaluation = commands.add_parser(
+        "eval", parents=[offline], help=f"score detection against {config.labels_file}"
+    )
+    evaluation.add_argument("--model", required=True, choices=config.eval_models)
     args = parser.parse_args(argv)
+    if args.command == "eval":
+        return _eval(args.model, offline=args.offline)
     if args.command == "run":
         codes = _run([args.transcript], offline=args.offline)
         return max(codes.values(), default=_BAD_INPUT)
@@ -98,13 +104,7 @@ def _process(
         print(f"error: {error}", file=sys.stderr)
         return _BAD_INPUT
     stem = path.stem
-    cache = llm.Cache(
-        directory=config.llm_cache_dir,
-        offline=offline,
-        record=llm.may_record(path, config.transcripts_dir),
-        now=lambda: datetime.now(UTC).isoformat(timespec="seconds"),
-    )
-    call = functools.partial(llm.call_model, cache=cache, api_key=settings.anthropic_api_key)
+    call = _call(path, settings=settings, offline=offline)
     try:
         result = detect(transcript, themes, call=call, model=config.detect_model)
     except (llm.LLMError, DetectError) as error:
@@ -146,6 +146,63 @@ def _process(
     )
     print(brief.preview(message))
     return _OK
+
+
+def _eval(model: str, *, offline: bool) -> int:
+    """Detect and check every transcript with `model`, then score, print and save the report."""
+    settings = config.load_settings()
+    # A fixed directory, as for `run-all`, so the test set and its cost are known.
+    paths = sorted(config.transcripts_dir.glob("*.txt"))
+    try:
+        themes = load_themes(config.themes_file)
+        labels = evaluate.load_labels(
+            config.labels_file, stems=[p.stem for p in paths], theme_ids=[t.id for t in themes]
+        )
+        transcripts = {path: _read_transcript(path) for path in paths}
+    except (_InputError, WeaknessesError, evaluate.LabelsError, OSError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return _BAD_INPUT
+    outcomes: list[evaluate.Outcome] = []
+    for path, transcript in transcripts.items():
+        stem = path.stem
+        call = _call(path, settings=settings, offline=offline)
+        try:
+            result = detect(transcript, themes, call=call, model=model)
+        except DetectError as error:
+            # A recorded unusable answer is the model's result: scored as finding nothing.
+            print(f"{stem}: {error}", file=sys.stderr)
+            outcomes.append(evaluate.Outcome(stem, labels[stem], (), (), error.answer, str(error)))
+            continue
+        except llm.LLMError as error:
+            # A missing recording or a failed call says nothing about the model, so no
+            # report is written rather than one scored on part of the test set.
+            _fail(stem, error)
+            print(f"error: no report written for {model}", file=sys.stderr)
+            return _FAILED
+        verdicts = guardrail.check(result.detections, transcript, themes)
+        outcomes.append(
+            evaluate.Outcome(stem, labels[stem], verdicts, result.malformed, result.answer)
+        )
+    report = evaluate.render(model, outcomes, themes)
+    try:
+        path = evaluate.save_report(report, config.reports_dir, model)
+    except OSError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return _FAILED
+    print(report, end="")
+    print(f"report written to {path}")
+    return _OK
+
+
+def _call(path: Path, *, settings: config.Settings, offline: bool) -> llm.ModelCall:
+    """The model call for one transcript, recording only if the transcript may be committed."""
+    cache = llm.Cache(
+        directory=config.llm_cache_dir,
+        offline=offline,
+        record=llm.may_record(path, config.transcripts_dir),
+        now=lambda: datetime.now(UTC).isoformat(timespec="seconds"),
+    )
+    return functools.partial(llm.call_model, cache=cache, api_key=settings.anthropic_api_key)
 
 
 def _print_verdicts(stem: str, result: DetectResult, verdicts: Sequence[Verdict]) -> None:

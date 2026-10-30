@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from objection_brief import config
 from objection_brief.detect import Detection
 from objection_brief.guardrail import Verdict
-from objection_brief.llm import JSON, ModelCall, Usage
+from objection_brief.llm import JSON, ModelCall, Usage, tagged
 from objection_brief.weaknesses import Theme
 
 __all__ = [
@@ -145,7 +145,7 @@ def draft_follow_up(theme: Theme, quote: str, *, call: ModelCall, model: str) ->
         prompt_version=config.follow_up_prompt_version,
         system=follow_up_prompt(theme),
         # The quote is the prospect's text, so it goes in the user turn, never the system one.
-        messages=[{"role": "user", "content": f"<quote>\n{quote}\n</quote>"}],
+        messages=[{"role": "user", "content": tagged("quote", quote)}],
         output_config={"effort": config.follow_up_effort},
         max_tokens=config.follow_up_max_tokens,
     )

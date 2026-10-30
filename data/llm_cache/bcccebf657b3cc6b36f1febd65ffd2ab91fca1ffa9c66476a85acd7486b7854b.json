@@ -1,7 +1,7 @@
 {
-  "output": "{\"objections\":[{\"theme_id\":\"consolidation_depth\",\"quote\":\"We also have three entities reporting in different currencies, and two of them follow a different accounting standard, so would this replace our consolidation tool or sit next to it?\",\"speaker\":\"prospect\",\"confidence\":0.8},{\"theme_id\":\"excel_interop\",\"quote\":\"The other thing is the management pack, which my team rebuilds in Excel every month because no system has ever got the layout right.\",\"speaker\":\"prospect\",\"confidence\":0.7}]}",
-  "prompt_version": "detect-v1",
-  "recorded_at": "2026-10-30T15:53:51+00:00",
+  "output": "{\"objections\":[{\"theme_id\":\"consolidation_depth\",\"quote\":\"We also have three entities reporting in different currencies, and two of them follow a different accounting standard, so would this replace our consolidation tool or sit next to it?\",\"speaker\":\"prospect\",\"confidence\":0.95},{\"theme_id\":\"excel_interop\",\"quote\":\"The other thing is the management pack, which my team rebuilds in Excel every month because no system has ever got the layout right.\",\"speaker\":\"prospect\",\"confidence\":0.8}]}",
+  "prompt_version": "detect-v2",
+  "recorded_at": "2026-10-30T20:01:19+00:00",
   "request": {
     "max_tokens": 16000,
     "messages": [
@@ -10,7 +10,7 @@
         "role": "user"
       }
     ],
-    "model": "claude-haiku-5-5",
+    "model": "claude-sonnet-5-5",
     "output_config": {
       "effort": "low",
       "format": {
@@ -71,6 +71,6 @@
   "stop_reason": "end_turn",
   "usage": {
     "input_tokens": 2407,
-    "output_tokens": 500
+    "output_tokens": 168
   }
 }

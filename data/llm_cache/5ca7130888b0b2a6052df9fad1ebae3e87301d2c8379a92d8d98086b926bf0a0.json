@@ -1,7 +1,7 @@
 {
-  "output": "{\"objections\":[{\"theme_id\":\"access_permissions\",\"quote\":\"Honestly, setting up permissions so each of our fifty budget owners only sees their own cost center sounds like a project in itself.\",\"speaker\":\"prospect\",\"confidence\":0.95},{\"theme_id\":\"access_permissions\",\"quote\":\"My bigger worry is what happens after.\",\"speaker\":\"prospect\",\"confidence\":0.6}]}",
-  "prompt_version": "detect-v1",
-  "recorded_at": "2026-10-30T15:04:52+00:00",
+  "output": "{\"objections\":[{\"theme_id\":\"access_permissions\",\"quote\":\"Honestly, setting up permissions so each of our fifty budget owners only sees their own cost center sounds like a project in itself.\",\"speaker\":\"prospect\",\"confidence\":0.97}]}",
+  "prompt_version": "detect-v2",
+  "recorded_at": "2026-10-30T20:01:02+00:00",
   "request": {
     "max_tokens": 16000,
     "messages": [
@@ -10,7 +10,7 @@
         "role": "user"
       }
     ],
-    "model": "claude-haiku-5-5",
+    "model": "claude-sonnet-5-5",
     "output_config": {
       "effort": "low",
       "format": {
@@ -71,6 +71,6 @@
   "stop_reason": "end_turn",
   "usage": {
     "input_tokens": 2572,
-    "output_tokens": 134
+    "output_tokens": 86
   }
 }

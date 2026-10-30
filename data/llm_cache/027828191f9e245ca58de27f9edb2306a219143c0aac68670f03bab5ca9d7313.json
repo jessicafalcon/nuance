@@ -1,7 +1,7 @@
 {
-  "output": "{\"objections\":[{\"theme_id\":\"learning_curve_non_finance\",\"quote\":\"Our headteachers are not finance people, and I can't see them building or changing a model without someone holding their hand.\",\"speaker\":\"prospect\",\"confidence\":0.9},{\"theme_id\":\"pricing_escalation\",\"quote\":\"If all twenty-two headteachers need a licence, the cost goes up every time we open or take on a school.\",\"speaker\":\"prospect\",\"confidence\":0.9},{\"theme_id\":\"pricing_escalation\",\"quote\":\"And at renewal? We're a charity. A big jump at renewal would be very hard to explain to the trustees.\",\"speaker\":\"prospect\",\"confidence\":0.85}]}",
-  "prompt_version": "detect-v1",
-  "recorded_at": "2026-10-30T15:53:44+00:00",
+  "output": "{\"objections\":[{\"theme_id\":\"learning_curve_non_finance\",\"quote\":\"Our headteachers are not finance people, and I can't see them building or changing a model without someone holding their hand.\",\"speaker\":\"prospect\",\"confidence\":0.93},{\"theme_id\":\"pricing_escalation\",\"quote\":\"If all twenty-two headteachers need a licence, the cost goes up every time we open or take on a school.\",\"speaker\":\"prospect\",\"confidence\":0.9},{\"theme_id\":\"pricing_escalation\",\"quote\":\"And at renewal? We're a charity. A big jump at renewal would be very hard to explain to the trustees.\",\"speaker\":\"prospect\",\"confidence\":0.92}]}",
+  "prompt_version": "detect-v2",
+  "recorded_at": "2026-10-30T20:00:44+00:00",
   "request": {
     "max_tokens": 16000,
     "messages": [

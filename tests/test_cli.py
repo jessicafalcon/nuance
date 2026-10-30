@@ -1,4 +1,4 @@
-"""`run` and `run-all` refuse bad input, record only synthetic transcripts, and log before briefing."""
+"""`run`, `run-all` and `eval` refuse bad input, record only synthetic transcripts, and log as specified."""
 
 from __future__ import annotations
 
@@ -274,3 +274,86 @@ def test_run_all_with_no_transcripts_is_refused(
 ) -> None:
     assert main(["run-all"]) == 2
     assert "no .txt transcripts in data/transcripts" in capsys.readouterr().err
+
+
+@pytest.fixture
+def test_set(repo: Path) -> Path:
+    """The working directory with every committed transcript and the labels, no cache."""
+    shutil.copytree(
+        REPO / "data" / "transcripts", repo / "data" / "transcripts", dirs_exist_ok=True
+    )
+    shutil.copy(REPO / "data" / "labels.yaml", repo / "data")
+    return repo
+
+
+def test_eval_offline_miss_writes_no_report(
+    test_set: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # A report scored on part of the test set would understate misses.
+    assert main(["eval", "--model", "claude-sonnet-5-5", "--offline"]) == 1
+    err = capsys.readouterr().err
+    assert err.startswith("t01_permissions: no recorded answer for key ")
+    assert err.endswith("error: no report written for claude-sonnet-5-5\n")
+    assert not (test_set / config.reports_dir).exists()
+
+
+def test_eval_scores_an_unusable_answer_as_a_miss_and_logs_nothing(
+    test_set: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-" + "ant-" + "x" * 40)
+    stop_reasons = iter(["refusal"])
+
+    def fake_send(request: dict[str, Any], api_key: str) -> tuple[str, str | None, Usage]:
+        # The first transcript, t01, is refused; every other answer finds nothing.
+        return '{"objections": []}', next(stop_reasons, "end_turn"), Usage(100, 10)
+
+    monkeypatch.setattr(llm, "_send", fake_send)
+
+    assert main(["eval", "--model", "claude-sonnet-5-5"]) == 0
+    report = (test_set / config.reports_dir / "eval_claude-sonnet-5-5.md").read_text("utf-8")
+    assert (
+        "| t01_permissions | access_permissions | none | no usable answer: the model stopped "
+        "with 'refusal', not 'end_turn' |"
+    ) in report
+    # The refused answer's tokens count: twelve answers of 100 input and 10 output tokens.
+    assert "| Tokens | 1,200 | 120 |" in report
+    assert "report written to reports/eval_claude-sonnet-5-5.md" in capsys.readouterr().out
+    assert len(list((test_set / "data" / "llm_cache").iterdir())) == 12
+    # The eval report lists every rejection; the log holds `run` and `run-all` only (brief §15).
+    assert not (test_set / config.log_db).exists()
+
+
+def test_eval_refuses_bad_labels_before_any_call(
+    test_set: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    labels = test_set / "data" / "labels.yaml"
+    labels.write_text(labels.read_text("utf-8") + "t01_permissions: []\n", "utf-8")
+    assert main(["eval", "--model", "claude-haiku-5-5", "--offline"]) == 2
+    assert "'t01_permissions' is listed twice" in capsys.readouterr().err
+
+
+def test_eval_accepts_only_the_pinned_models(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit):
+        main(["eval", "--model", "claude-haiku-5-5/../x"])
+    assert "invalid choice" in capsys.readouterr().err
+
+
+def test_eval_refuses_a_bad_transcript_before_any_call(
+    test_set: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # The test set must be complete, so one unreadable transcript stops the whole eval.
+    (test_set / "data" / "transcripts" / "t12_no_objection.txt").write_text(
+        "x" * (config.max_transcript_bytes + 1), "utf-8"
+    )
+    assert main(["eval", "--model", "claude-haiku-5-5", "--offline"]) == 2
+    assert "larger than" in capsys.readouterr().err
+
+
+def test_eval_reports_a_report_that_cannot_be_written(
+    test_set: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    shutil.copytree(REPO / "data" / "llm_cache", test_set / "data" / "llm_cache")
+    # A file where the reports directory should be: the write fails after scoring.
+    (test_set / config.reports_dir).write_text("", "utf-8")
+    assert main(["eval", "--model", "claude-haiku-5-5", "--offline"]) == 1
+    assert capsys.readouterr().err.startswith("error: ")

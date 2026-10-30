@@ -9,7 +9,7 @@ from enum import StrEnum
 from typing import Any, cast
 
 from objection_brief import config
-from objection_brief.llm import JSON, ModelCall, ModelResult
+from objection_brief.llm import JSON, ModelCall, ModelResult, tagged
 from objection_brief.weaknesses import Theme
 
 __all__ = [
@@ -80,6 +80,16 @@ class DetectResult:
 class DetectError(Exception):
     """The answer as a whole is unusable: refused, cut off, or not the expected JSON."""
 
+    def __init__(self, message: str, answer: ModelResult) -> None:
+        super().__init__(message)
+        # Set by `detect`, so an unusable answer's tokens and recording date still count
+        # in the eval report (brief §9).
+        self.answer = answer
+
+
+class _ShapeError(ValueError):
+    pass
+
 
 _SYSTEM = """\
 You find sales objections that a prospect raises in a sales call transcript.
@@ -142,20 +152,25 @@ def detect(
     """Make the one detection call for a transcript and parse its answer.
 
     Raises:
-        DetectError: the answer as a whole is unusable.
+        DetectError: the answer as a whole is unusable; the error carries it.
     """
     answer = call(
         model=model,
         prompt_version=config.detect_prompt_version,
         system=system_prompt(themes),
         # The transcript is untrusted, so it goes in the user turn, never the system one.
-        messages=[{"role": "user", "content": f"<transcript>\n{transcript}\n</transcript>"}],
+        messages=[{"role": "user", "content": tagged("transcript", transcript)}],
         output_config=output_config(themes),
         max_tokens=config.detect_max_tokens,
     )
     if answer.stop_reason != "end_turn":
-        raise DetectError(f"the model stopped with {answer.stop_reason!r}, not 'end_turn'")
-    detections, malformed = parse_objections(answer.output)
+        raise DetectError(f"the model stopped with {answer.stop_reason!r}, not 'end_turn'", answer)
+    try:
+        detections, malformed = parse_objections(answer.output)
+    # Only the shape errors `parse_objections` raises on purpose: any other error is a
+    # bug, and must not be scored as the model's unusable answer.
+    except _ShapeError as error:
+        raise DetectError(str(error), answer) from None
     return DetectResult(detections, malformed, answer)
 
 
@@ -166,17 +181,18 @@ def parse_objections(output: str) -> tuple[tuple[Detection, ...], tuple[Malforme
     `UNKNOWN_THEME`. A confidence outside [0, 1] is the guardrail's too.
 
     Raises:
-        DetectError: the output isn't a JSON object with an `objections` list.
+        ValueError: the output isn't a JSON object with an `objections` list; `detect`
+            raises it as a `DetectError` carrying the answer.
     """
     try:
         data: Any = json.loads(output)
     except ValueError as error:
-        raise DetectError(f"the answer is not JSON ({error})") from None
+        raise _ShapeError(f"the answer is not JSON ({error})") from None
     objections: Any = (
         cast("dict[str, Any]", data).get("objections") if isinstance(data, dict) else None
     )
     if not isinstance(objections, list):
-        raise DetectError("the answer has no `objections` list")
+        raise _ShapeError("the answer has no `objections` list")
     detections: list[Detection] = []
     malformed: list[Malformed] = []
     for item in cast("list[Any]", objections):

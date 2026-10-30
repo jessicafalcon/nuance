@@ -1,7 +1,7 @@
 {
   "output": "{\"objections\":[{\"theme_id\":\"excel_interop\",\"quote\":\"Every quarter my team exports everything to Excel to format the board pack, and I can't see that changing.\",\"speaker\":\"prospect\",\"confidence\":0.9},{\"theme_id\":\"excel_interop\",\"quote\":\"And when the regional controllers edit numbers in their own sheets, getting those changes back in is where it always breaks.\",\"speaker\":\"prospect\",\"confidence\":0.8}]}",
-  "prompt_version": "detect-v1",
-  "recorded_at": "2026-10-30T15:53:31+00:00",
+  "prompt_version": "detect-v2",
+  "recorded_at": "2026-10-30T20:00:25+00:00",
   "request": {
     "max_tokens": 16000,
     "messages": [

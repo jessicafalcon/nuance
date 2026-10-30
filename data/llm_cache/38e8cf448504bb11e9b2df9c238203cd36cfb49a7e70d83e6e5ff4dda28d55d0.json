@@ -1,7 +1,7 @@
 {
-  "output": "Four minutes to recalculate a forecast across six thousand SKUs and thirty-two distribution points is a real problem, and it's a fair thing to worry about before committing. Very large models can slow down, and in our experience model design matters as much as the platform itself. During implementation we include a model design review so that the structure suits your volume, and before you sign, we can test performance on a sample of your own data. [PROOF] We can run a performance test on an anonymized sample of your largest model and share the results with you before any commitment on your side.",
-  "prompt_version": "follow-up-v3",
-  "recorded_at": "2026-10-30T16:08:53+00:00",
+  "output": "Thank you for sharing those details. Six thousand SKUs across thirty-two distribution points is a large model, and four minutes to recalculate a forecast is a real drag on planning. You are right that very large models can slow down, and in our experience model design matters as much as the platform itself. During implementation we review the model design with your team, and before you sign you can test performance on a sample of your own data. [PROOF] We would be glad to run a performance test on an anonymized sample of your largest model, and we would share the results with you before any commitment.",
+  "prompt_version": "follow-up-v4",
+  "recorded_at": "2026-10-30T20:00:32+00:00",
   "request": {
     "max_tokens": 4000,
     "messages": [
@@ -19,6 +19,6 @@
   "stop_reason": "end_turn",
   "usage": {
     "input_tokens": 526,
-    "output_tokens": 166
+    "output_tokens": 167
   }
 }

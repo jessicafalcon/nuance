@@ -27,6 +27,7 @@ the model, Slack and DuckDB at the edges.
 | `brief.py` | Block Kit message and the grounded follow-up draft | — |
 | `notify.py` | POST to the Slack webhook, or write `out/briefs/<id>.json` | `requests` |
 | `log.py` | Append detections to DuckDB | `duckdb` |
+| `evaluate.py` | Load `labels.yaml`, score kept detections, render and write the eval report | — |
 | `cli.py` | Parse arguments, wire the pipeline, print | `print` |
 
 The `boundary-guard` hook enforces the "Owns" column on every edit and in pre-commit.
@@ -49,7 +50,7 @@ a value that never changes, no `utils.py`.
 
 - **Pure core, I/O at the edges.** `guardrail`, `brief` (the Block Kit part) and the
   eval metrics are pure functions over typed values. Files, network and the clock are
-  touched in `notify.py`, `log.py`, `llm.py` and `cli.py`.
+  touched in `notify.py`, `log.py`, `llm.py`, `evaluate.py` (the report) and `cli.py`.
 - **Inputs are explicit.** Paths, thresholds, model IDs, `run_id` and `created_at` are
   parameters. Only `config.py` reads the environment; only `cli.py` reads the clock.
 - **The CLI is thin.** argparse commands parse, build config, call functions, print.

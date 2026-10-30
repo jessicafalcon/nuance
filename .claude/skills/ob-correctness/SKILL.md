@@ -29,10 +29,12 @@ the match (no edit distance, no stemming): a paraphrase fails by design.
 
 ### 2. Nothing disappears silently
 
-Every detection the model returns is logged, kept or not, with `kept` and a
-`reject_reason` from the `RejectReason` enum. Rejections are counted by reason in the
-`run` output and the eval report. A model answer that fails to parse is a recorded
-failure for that transcript, not a crash of `run-all` and not a retry loop.
+Every detection the model returns in `run` and `run-all` is logged, kept or not, with
+`kept` and a `reject_reason` from the `RejectReason` enum; the eval lists each rejected
+item, miss and false positive in its report instead (brief §9). Rejections are counted by
+reason in the `run` output and the eval report. A model answer that fails to parse is a
+recorded failure for that transcript, not a crash of `run-all` and not a retry loop; the
+eval scores it as finding nothing.
 
 ### 3. Human in the loop
 

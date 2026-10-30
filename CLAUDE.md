@@ -13,7 +13,7 @@ is published the moment it's pushed.
 
 ```text
 src/objection_brief/  the pipeline: config, weaknesses, llm (the only model edge), detect,
-                      guardrail, brief, notify, log, cli
+                      guardrail, brief, notify, log, evaluate, cli
 data/                 weaknesses.yaml, synthetic transcripts/, labels.yaml, llm_cache/ (recorded model responses)
 scripts/              report.sql
 reports/              eval_<model>.md, generated offline from data/llm_cache/
@@ -33,7 +33,7 @@ out/                  gitignored: briefs, the DuckDB file
 3. **Reproducible.** Every model call replays from the committed cache; the pipeline
    and the eval run offline in CI, and the README quotes only committed reports.
 4. **Nothing disappears silently.** Every detection is logged, kept or rejected, with
-   a reason.
+   a reason; the eval lists its own in its report.
 5. **Small, typed, tested, offline.** One job per module, one owner per dependency,
    one test per non-trivial unit, no network in tests.
 6. **Smallest scope.** When unsure, choose the smaller option and note it in the README
@@ -194,21 +194,26 @@ touched, commands run and results, records updated, open risks, next step.
   `low`, no `temperature`, and owns `RejectReason` with `malformed_detection` (brief §15);
   `objection-brief run <transcript> [--offline]` prints the raw answer and the verdicts.
   Checkpoint run: live answers for t01 and t11 recorded in `data/llm_cache/` (Claude
-  Haiku 5.5, 2026-10-30); `tests/test_cli.py` replays both offline.
+  Haiku 5.5, 2026-10-30, re-recorded at `detect-v2` in step 7); `tests/test_cli.py`
+  replays both offline.
 - **Build step 6 (brief, notify, log, `run-all`):** merged (#11). One brief
   item per theme (its most confident kept detection); `guardrail.count_rejections` takes
   the malformed items too; logged before the brief. The follow-up (Claude Haiku 5.5,
-  `follow-up-v3`) writes a `[PROOF]` slot the code fills, and a draft that fails a check
+  `follow-up-v4` since step 7) writes a `[PROOF]` slot the code fills, and a draft that fails a check
   is withheld with its reason; the v1 and v2 recordings, and why each changed, are in
   #11's commits (brief §15). `run-all --offline` writes briefs for t01–t08 only, and
   `tests/test_pipeline.py` replays it. Briefs go to `out/briefs/`; the Slack path is
   tested with fakes only.
-- **Next:** step 7 (brief §9), once step 6 merges.
-- **Open decisions:**
-  - Step 7 or later: a quote or transcript containing `</quote>` or `</transcript>`
-    closes its tag early; the guardrail limits the effect, and fixing `detect` re-records
-    every detection entry.
-  - Tightening `excel_interop.detect_when`'s second clause, deferred until recorded
-    model answers exist (step 5 or 7).
-  - Step 7: `yaml.safe_load` keeps the last of two equal keys, so a duplicated stem in
-    `labels.yaml` passes `tests/test_data.py`; the eval's labels loader rejects it.
+- **Build step 7 (eval):** merged (#12). `objection-brief eval --model <id>
+  [--offline]` (`evaluate.py`) scores (transcript, theme) pairs after the guardrail
+  against `labels.yaml`, through a strict loader, and writes `reports/eval_<model>.md`;
+  it logs nothing (brief §9, §15). `llm.tagged` escapes a closing tag inside a
+  transcript or quote (`detect-v2`, `follow-up-v4`), and every entry was re-recorded
+  live on 2026-10-30. Claude Haiku 5.5 and Claude Sonnet 5.5 both score 10 of 10 pairs
+  with no false positives; detection costs $0.32 and $5.46 per 1,000 transcripts (prices
+  checked 2026-10-30). `excel_interop.detect_when` is unchanged: neither report shows a
+  false positive from its second clause. `tests/test_pipeline.py` reproduces both
+  reports byte for byte.
+- **Next:** step 8 (README, brief §11), once step 7 merges; follow-up cost goes in its
+  cost section (brief §15).
+- **Open decisions:** none.
