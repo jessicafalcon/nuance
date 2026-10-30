@@ -173,9 +173,10 @@ touched, commands run and results, records updated, open risks, next step.
 - **Build step 1 (scaffold, security hooks, CI, replay rules):** merged (#1). The repo is
   public; branch protection on `main` requires the `check`, `secrets`, `content` and
   `audit` jobs; secret-scanning push protection and Dependabot are on.
-- **Build step 2 (`feat/weaknesses`):** done. `pyyaml`, `data/weaknesses.yaml` with the
-  six themes (brief §6.1, all `draft`, placeholder proofs), `weaknesses.py` (`load_themes`
-  → `tuple[Theme, ...]`, `WeaknessesError` naming theme and field), `tests/test_weaknesses.py`.
-- **Next:** step 3, synthetic transcripts and `labels.yaml`, which wait for the
-  maintainer's review before step 4.
-- **Open decisions:** none.
+- **Build step 2 (themes and loader):** merged (#4). `data/weaknesses.yaml` with the six
+  themes (brief §6.1, all `draft`, placeholder proofs); `weaknesses.load_themes` →
+  `tuple[Theme, ...]`, raising `WeaknessesError` that names the theme and field.
+- **Next:** step 3 on `feat/transcripts`, synthetic transcripts and `labels.yaml`, which
+  wait for the maintainer's review before step 4.
+- **Open decisions:** whether the loader's stricter validation (brief §6.1) also gets a
+  §15 line (#4).
