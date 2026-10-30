@@ -148,7 +148,7 @@ def test_report_explains_every_miss_rejection_and_unusable_answer() -> None:
     # Reasons in `RejectReason` order, as brief §7.2 lists the checks.
     assert "| malformed_detection | 1 |\n| low_confidence | 1 |" in report
     assert "| t03 | excel_interop | low_confidence |" in report
-    assert "| t04 | (malformed) | malformed_detection |" in report
+    assert "| t04 | (malformed) | malformed_detection: `quote` is missing |" in report
     # Five answers of 1,000 input and 100 output tokens: 5,000 x $2 + 500 x $10 per million.
     assert "| Tokens | 5,000 | 500 |" in report
     assert "Estimated cost: $0.0150 for 5 transcripts, $3.00 per 1,000 transcripts." in report
@@ -158,6 +158,33 @@ def test_report_explains_every_miss_rejection_and_unusable_answer() -> None:
 def test_report_without_rejections_says_so() -> None:
     report = render("claude-haiku-5-5", OUTCOMES[:1], THEMES)
     assert "2 detections returned, 2 kept, 0 rejected.\n\n## Tokens and cost" in report
+
+
+def test_a_model_theme_id_cannot_break_the_report_table() -> None:
+    # An id outside the schema is rejected as unknown, but still printed in the report.
+    rejected = [("x | y\n## z", RejectReason.UNKNOWN_THEME)]
+    report = render("claude-haiku-5-5", [_outcome("t01", set(), [], rejected)], THEMES)
+    assert "| t01 | x \\| y ## z | unknown_theme |" in report
+
+
+@pytest.mark.parametrize("content", [b"t01: [\n", b"t01: [\xff]\n"], ids=["yaml", "utf-8"])
+def test_unreadable_labels_are_refused(tmp_path: Path, content: bytes) -> None:
+    path = tmp_path / "labels.yaml"
+    path.write_bytes(content)
+    with pytest.raises(LabelsError, match="not valid UTF-8 YAML"):
+        load_labels(path, stems=STEMS, theme_ids=THEME_IDS)
+
+
+def test_a_failed_report_write_leaves_no_temporary_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fail(self: Path, target: Path) -> Path:
+        raise OSError("disk full")
+
+    monkeypatch.setattr(Path, "replace", fail)
+    with pytest.raises(OSError, match="disk full"):
+        save_report("text\n", tmp_path, "claude-haiku-5-5")
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_report_is_saved_only_under_a_pinned_model(tmp_path: Path) -> None:

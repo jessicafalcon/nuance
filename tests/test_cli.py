@@ -336,3 +336,24 @@ def test_eval_accepts_only_the_pinned_models(capsys: pytest.CaptureFixture[str])
     with pytest.raises(SystemExit):
         main(["eval", "--model", "claude-haiku-5-5/../x"])
     assert "invalid choice" in capsys.readouterr().err
+
+
+def test_eval_refuses_a_bad_transcript_before_any_call(
+    test_set: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # The test set must be complete, so one unreadable transcript stops the whole eval.
+    (test_set / "data" / "transcripts" / "t12_no_objection.txt").write_text(
+        "x" * (config.max_transcript_bytes + 1), "utf-8"
+    )
+    assert main(["eval", "--model", "claude-haiku-5-5", "--offline"]) == 2
+    assert "larger than" in capsys.readouterr().err
+
+
+def test_eval_reports_a_report_that_cannot_be_written(
+    test_set: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    shutil.copytree(REPO / "data" / "llm_cache", test_set / "data" / "llm_cache")
+    # A file where the reports directory should be: the write fails after scoring.
+    (test_set / config.reports_dir).write_text("", "utf-8")
+    assert main(["eval", "--model", "claude-haiku-5-5", "--offline"]) == 1
+    assert capsys.readouterr().err.startswith("error: ")

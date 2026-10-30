@@ -87,6 +87,10 @@ class DetectError(Exception):
         self.answer = answer
 
 
+class _ShapeError(ValueError):
+    pass
+
+
 _SYSTEM = """\
 You find sales objections that a prospect raises in a sales call transcript.
 
@@ -163,7 +167,9 @@ def detect(
         raise DetectError(f"the model stopped with {answer.stop_reason!r}, not 'end_turn'", answer)
     try:
         detections, malformed = parse_objections(answer.output)
-    except ValueError as error:
+    # Only the shape errors `parse_objections` raises on purpose: any other error is a
+    # bug, and must not be scored as the model's unusable answer.
+    except _ShapeError as error:
         raise DetectError(str(error), answer) from None
     return DetectResult(detections, malformed, answer)
 
@@ -181,12 +187,12 @@ def parse_objections(output: str) -> tuple[tuple[Detection, ...], tuple[Malforme
     try:
         data: Any = json.loads(output)
     except ValueError as error:
-        raise ValueError(f"the answer is not JSON ({error})") from None
+        raise _ShapeError(f"the answer is not JSON ({error})") from None
     objections: Any = (
         cast("dict[str, Any]", data).get("objections") if isinstance(data, dict) else None
     )
     if not isinstance(objections, list):
-        raise ValueError("the answer has no `objections` list")
+        raise _ShapeError("the answer has no `objections` list")
     detections: list[Detection] = []
     malformed: list[Malformed] = []
     for item in cast("list[Any]", objections):

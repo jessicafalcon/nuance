@@ -203,14 +203,17 @@ def _rejections(outcomes: Sequence[Outcome]) -> list[str]:
     lines += [f"| {reason} | {counts[reason]} |" for reason in RejectReason if counts[reason]]
     lines += ["", "| Transcript | Theme | Reason |", "|---|---|---|"]
     for o in outcomes:
+        # The theme id is the model's: one outside the schema is rejected, but still lands
+        # here, so it is escaped like any other model text.
         lines += [
-            f"| {o.transcript_id} | {v.detection.theme_id} | {v.reject_reason} |"
+            f"| {o.transcript_id} | {_cell(v.detection.theme_id)} | {v.reject_reason} |"
             for v in o.verdicts
             if v.reject_reason is not None
         ]
         lines += [
-            f"| {o.transcript_id} | (malformed) | {RejectReason.MALFORMED_DETECTION} |"
-            for _ in o.malformed
+            f"| {o.transcript_id} | (malformed) | {RejectReason.MALFORMED_DETECTION}: "
+            f"{_cell(m.problem)} |"
+            for m in o.malformed
         ]
     return lines
 
