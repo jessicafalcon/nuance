@@ -181,6 +181,10 @@ touched, commands run and results, records updated, open risks, next step.
 - **Build step 2 (themes and loader):** merged (#4). `data/weaknesses.yaml` with the six
   themes (brief §6.1, all `draft`, placeholder proofs); `weaknesses.load_themes` →
   `tuple[Theme, ...]`, raising `WeaknessesError` that names the theme and field.
-- **Next:** step 3 on `feat/transcripts`, synthetic transcripts and `labels.yaml`, which
-  wait for the maintainer's review before step 4.
+- **Build step 3 (transcripts and labels):** merged (#7). Twelve synthetic transcripts in
+  `data/transcripts/` (t01–t08 positives covering all six themes, t07 and t08 with two
+  objections; t09–t12 the four negatives in brief §6.2), one speaker turn per line;
+  `data/labels.yaml` keyed by file stem.
+- **Next:** step 4 on `feat/guardrail`, `guardrail.py` and `tests/test_guardrail.py`
+  (brief §7.2, §10).
 - **Open decisions:** none.
