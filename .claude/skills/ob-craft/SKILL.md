@@ -22,7 +22,7 @@ the model, Slack and DuckDB at the edges.
 | `config.py` | Model IDs, thresholds, price constants; reads the environment once into a frozen settings object | `os.environ` |
 | `weaknesses.py` | Load and validate `data/weaknesses.yaml` into typed themes | — |
 | `llm.py` | `call_model(...)`: the one function that calls a model provider, through the replay cache in `data/llm_cache/` | `anthropic` |
-| `detect.py` | Build the detection prompt and tool schema, parse the tool call into `Detection`s | — |
+| `detect.py` | Build the detection prompt and output schema, parse the answer into `Detection`s | — |
 | `guardrail.py` | Pure checks: verbatim quote, speaker, confidence, known theme; reasons for rejection | — |
 | `brief.py` | Block Kit message and the grounded follow-up draft | — |
 | `notify.py` | POST to the Slack webhook, or write `out/briefs/<id>.json` | `requests` |
@@ -68,23 +68,27 @@ a value that never changes, no `utils.py`.
 
 ## Model calls
 
-- One function, `llm.call_model(*, model, prompt_version, system, messages, tools,
-  tool_choice, max_tokens, temperature, cache: Cache) -> ModelResult`, returns the
-  parsed tool input, token usage, `recorded_at` and whether it was replayed.
+- One function, `llm.call_model(*, model, prompt_version, system, messages,
+  output_config, max_tokens, cache: Cache, api_key) -> ModelResult`, returns the
+  answer's text, `stop_reason`, token usage, `recorded_at` and whether it was replayed.
 - **Replay first** (brief §7.6 lists the key's inputs): canonical JSON is
-  `json.dumps(..., sort_keys=True, separators=(",", ":"))`, and `cache` is never part of
-  the key. `Cache` is a small frozen dataclass: directory, `offline`, `record`.
-  `cli.py` builds it from `--offline` and the recording rule in §7.6.
+  `json.dumps(..., sort_keys=True, separators=(",", ":"))`, and neither `cache` nor
+  `api_key` is part of the key. `Cache` is a small frozen dataclass: directory,
+  `offline`, `record`, and `now`, the clock `cli.py` passes so `llm.py` reads none.
+  `cli.py` builds it from `--offline` and `llm.may_record` (the rule in §7.6).
 - **How it reaches callers:** `detect` and `brief` take a `call: ModelCall` parameter,
-  a `Protocol` in `llm.py` with `call_model`'s keywords minus `cache`. `cli.py` passes
-  `functools.partial(llm.call_model, cache=cache)`; tests pass a fake with the same
-  keywords.
+  a `Protocol` in `llm.py` with `call_model`'s keywords minus `cache` and `api_key`.
+  `cli.py` passes `functools.partial(llm.call_model, cache=cache, api_key=...)`; tests
+  pass a fake with the same keywords.
 - Entries are one JSON file per key, written to a temp file and `os.replace`d; a
   corrupt entry is an error naming the file, never a silent re-call.
-- Structured output by **forced tool use** with a JSON schema; `theme_id` and
-  `speaker` are `enum`s in the schema, so the model can't invent a value.
-- Pinned model IDs and per-call `temperature` from `config.py` (0 for detection).
-- A per-call timeout and bounded retries on the client; `max_tokens` set on every call.
+- Structured output by **structured outputs** (`output_config.format`, a JSON schema);
+  `theme_id` and `speaker` are `enum`s in the schema, so the model can't invent a value.
+  Not forced tool use: Claude Sonnet 5.5 rejects it (brief §15).
+- Pinned model IDs, prompt versions and effort from `config.py`; no `temperature` or
+  other sampling parameter, which API version `2026-10-21` rejects.
+- A per-call timeout and bounded retries on the client; `max_tokens` set on every call,
+  with room for thinking.
 
 ## SQL and data files
 

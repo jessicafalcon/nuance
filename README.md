@@ -37,7 +37,7 @@ will include a validation plan.
 ## Planned design
 
 ```text
-transcript.txt → detect (one model call, forced tool use)
+transcript.txt → detect (one model call, structured output)
                → guardrail (quote must appear verbatim; prospect only; confidence ≥ 0.6; known theme)
                → brief (Slack Block Kit + a follow-up drafted only from the approved answer)
                → notify (Slack webhook if configured, otherwise out/briefs/<id>.json)

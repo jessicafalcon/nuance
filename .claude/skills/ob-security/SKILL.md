@@ -60,9 +60,9 @@ write "ignore previous instructions". Defenses, all required:
 
 - The transcript goes in the user turn, wrapped in a delimited block, never in the
   system prompt. The system prompt says the block is data to analyze, not instructions.
-- Forced tool use with a JSON schema: `theme_id` and `speaker` are enums, `confidence`
-  is a bounded number. The model has no free-text channel into the brief except
-  `quote`.
+- Structured outputs with a JSON schema: `theme_id` and `speaker` are enums,
+  `confidence` is a number the guardrail bounds to [0, 1]. The model has no free-text
+  channel into the brief except `quote`.
 - The guardrail's verbatim check means `quote` can only be text that is in the
   transcript; a fabricated quote is rejected.
 - The follow-up prompt gets only the inputs brief §7.3 allows, and its output goes
