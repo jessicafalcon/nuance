@@ -7,7 +7,9 @@ license = "MIT"
 requires-python = ">=3.12,<3.13"
 # Runtime dependencies (PROJECT-BRIEF.md §4) are added by the build step that first
 # uses each one, so every lockfile change travels with the code that needs it.
-dependencies = []
+dependencies = [
+    "pyyaml>=6.0.3",
+]
 
 [dependency-groups]
 dev = [
