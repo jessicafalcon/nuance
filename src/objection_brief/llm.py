@@ -150,7 +150,7 @@ def call_model(
     output, stop_reason, usage = _send(request, api_key)
     result = ModelResult(output, stop_reason, usage, recorded_at=cache.now(), replayed=False)
     if cache.record:
-        _write(path, key, prompt_version, request, result)
+        _write(path, prompt_version, request, result)
     return result
 
 
@@ -174,10 +174,11 @@ def _send(request: JSON, api_key: str) -> tuple[str, str | None, Usage]:
     return output, message.stop_reason, usage
 
 
-def _write(path: Path, key: str, prompt_version: str, request: JSON, result: ModelResult) -> None:
-    # The entry holds the request and the answer, never the key or a header.
+def _write(path: Path, prompt_version: str, request: JSON, result: ModelResult) -> None:
+    # The entry holds the request and the answer, never the API key or a header. The file
+    # name is the cache key, so the entry doesn't repeat it (gitleaks reads a 64-hex value
+    # under "key" as a secret).
     entry = {
-        "key": key,
         "prompt_version": prompt_version,
         "request": request,
         "output": result.output,
