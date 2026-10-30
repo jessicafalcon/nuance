@@ -248,7 +248,7 @@ Tests must not call the API.
 
 One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked when its PR merges.
 
-- [ ] 1. Scaffold repo, `pyproject.toml`, `.env.example`, `.gitignore`, `CLAUDE.md`, security hooks, CI → **checkpoint:** `uv run pytest` runs (only the hook tests so far)
+- [x] 1. Scaffold repo, `pyproject.toml`, `.env.example`, `.gitignore`, `CLAUDE.md`, security hooks, CI → **checkpoint:** `uv run pytest` runs (only the hook tests so far)
 - [ ] 2. `weaknesses.yaml` + loader + `test_weaknesses.py` → **checkpoint:** tests pass
 - [ ] 3. Synthetic transcripts + `labels.yaml` → **checkpoint:** I review them before continuing
 - [ ] 4. `guardrail.py` + tests → **checkpoint:** tests pass

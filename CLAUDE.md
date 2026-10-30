@@ -170,8 +170,11 @@ touched, commands run and results, records updated, open risks, next step.
 
 ## Current status
 
-- **Build step 1 (scaffold and tooling):** on branch `build/tooling-and-ci`, PR open.
-  `uv run pytest` runs the hook tests; no pipeline code yet.
-- **Next step:** after the merge, `feat/weaknesses` (brief §12 step 2): `pyyaml`,
-  `data/weaknesses.yaml` with the six themes, `weaknesses.py`, `tests/test_weaknesses.py`.
+- **Build step 1 (scaffold, security hooks, CI, replay rules):** merged (#1). The repo is
+  public; branch protection on `main` requires the `check`, `secrets`, `content` and
+  `audit` jobs; secret-scanning push protection and Dependabot are on.
+- **Build step 2 (`feat/weaknesses`):** in progress. `pyyaml`, `data/weaknesses.yaml`
+  with the six themes (brief §6.1), `weaknesses.py`, `tests/test_weaknesses.py`.
+- **Next:** step 3, synthetic transcripts and `labels.yaml`, which wait for the
+  maintainer's review before step 4.
 - **Open decisions:** none.
