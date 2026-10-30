@@ -39,9 +39,9 @@ PRECOMMIT = ".pre-commit-config.yaml"
 CI = ".github/workflows/ci.yml"
 # The Markdown records (CLAUDE.md, records map) plus the agent definitions.
 DOC_GLOBS = ("*.md", ".claude/skills/*/SKILL.md", ".claude/agents/*.md", ".github/*.md")
-# An edit to any of these can change a checked fact.
-WATCHED_PREFIXES = (".claude/skills/", ".claude/agents/", ".claude/hooks/")
+# An edit to any Markdown file, these configs or a hook can change a checked fact.
 WATCHED_FILES = {PYPROJECT, PRECOMMIT, CI}
+HOOKS_DIR = ".claude/hooks/"
 
 _SEMVER = r"(\d+\.\d+\.\d+)"
 _VERSION = rf"v?{_SEMVER}"
@@ -116,12 +116,9 @@ def version_findings(pyproject: str, precommit: str, ci: str, docs: dict[str, st
         return [f"a uv or gitleaks pin is missing from {PYPROJECT}, {PRECOMMIT} or {CI}"]
     truth = {"uv": (uv_pin[1], PYPROJECT), "gitleaks": (gl_pin[1], PRECOMMIT)}
     copies = [(PRECOMMIT, "uv", uv_hook[1]), (CI, "gitleaks", gl_ci[1])]
-    copies += [
-        (name, tool, version)
-        for name, text in sorted(docs.items())
-        for tool, pattern in DOC_VERSION.items()
-        for version in pattern.findall(text)
-    ]
+    for name, text in sorted(docs.items()):
+        for tool, pattern in DOC_VERSION.items():
+            copies += [(name, tool, version) for version in pattern.findall(text)]
     return [
         f"{name}: {tool} {version}, but {truth[tool][1]} pins {truth[tool][0]}"
         for name, tool, version in copies
@@ -130,19 +127,19 @@ def version_findings(pyproject: str, precommit: str, ci: str, docs: dict[str, st
 
 
 def table_findings(claude: str, skills: set[str], agents: set[str], hooks: set[str]) -> list[str]:
-    """CLAUDE.md's skill, agent and hook tables against what is on disk."""
+    """CLAUDE.md's skill, agent and hook tables against what is on disk.
+
+    Hook files use underscores and their table rows use dashes, so names are compared
+    with underscores turned into dashes.
+    """
     found: list[str] = []
     for heading, on_disk, where in (
         ("Skills", skills, ".claude/skills/<name>/SKILL.md"),
         ("Agents", agents, ".claude/agents/<name>.md"),
         ("Hooks", hooks, ".claude/hooks/<name>.py or .sh"),
     ):
-        body = section(claude, heading)
-        rows = {n.replace("_", "-") for n in first_cell_names(body or "")} - {
-            "Skill",
-            "Agent",
-            "Hook",
-        }
+        rows = {n.replace("_", "-") for n in first_cell_names(section(claude, heading) or "")}
+        on_disk = {n.replace("_", "-") for n in on_disk}
         if not rows:
             found.append(f"{CLAUDE}: no '## {heading}' table found")
             continue
@@ -168,29 +165,21 @@ def check(root: Path) -> list[str]:
         for pattern in DOC_GLOBS
         for p in sorted(root.glob(pattern))
     }
-    hooks_dir = root / ".claude" / "hooks"
+    brief, readme, claude = (docs.get(name, "") for name in (BRIEF, README, CLAUDE))
     return [
-        *step_findings(read(BRIEF), read(README), read(CLAUDE)),
+        *step_findings(brief, readme, claude),
         *version_findings(read(PYPROJECT), read(PRECOMMIT), read(CI), docs),
         *table_findings(
-            read(CLAUDE),
+            claude,
             skills={p.parent.name for p in root.glob(".claude/skills/*/SKILL.md")},
             agents={p.stem for p in root.glob(".claude/agents/*.md")},
-            hooks={
-                p.stem.replace("_", "-") for p in hooks_dir.iterdir() if p.suffix in {".py", ".sh"}
-            }
-            if hooks_dir.is_dir()
-            else set(),
+            hooks={p.stem for p in root.glob(f"{HOOKS_DIR}*") if p.suffix in {".py", ".sh"}},
         ),
     ]
 
 
 def watched(rel_path: str) -> bool:
-    return (
-        rel_path.endswith(".md")
-        or rel_path in WATCHED_FILES
-        or rel_path.startswith(WATCHED_PREFIXES)
-    )
+    return rel_path.endswith(".md") or rel_path in WATCHED_FILES or rel_path.startswith(HOOKS_DIR)
 
 
 def main(argv: list[str]) -> int:
@@ -199,11 +188,13 @@ def main(argv: list[str]) -> int:
     if hook_mode:
         payload = json.load(sys.stdin)
         raw = (payload.get("tool_input") or {}).get("file_path", "")
+        if not raw:
+            return 0
         try:
             rel = Path(raw).resolve().relative_to(root).as_posix()
         except ValueError:
             return 0
-        if not raw or not watched(rel):
+        if not watched(rel):
             return 0
 
     found = check(root)

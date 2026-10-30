@@ -54,7 +54,8 @@ PRECOMMIT = """  - repo: https://github.com/astral-sh/uv-pre-commit
 CI = "      - name: Install gitleaks\n        env:\n          VERSION: 8.30.1\n"
 SKILLS = {"ob-craft"}
 AGENTS = {"ob-reviewer"}
-HOOKS = {"git-guard", "reviewer-bash-allowlist"}
+HOOKS = {"git_guard", "reviewer_bash_allowlist"}
+DRIFTED_README = README.replace("| In progress |", "| Done |")
 
 
 def test_committed_repo_has_no_drift() -> None:
@@ -68,8 +69,7 @@ def test_consistent_records_pass() -> None:
 
 
 def test_done_row_for_unticked_step_is_reported() -> None:
-    readme = README.replace("| Themes | In progress |", "| Themes | Done |")
-    assert dg.step_findings(BRIEF, readme, CLAUDE) == [
+    assert dg.step_findings(BRIEF, DRIFTED_README, CLAUDE) == [
         "README.md: step 2 is 'Done' but PROJECT-BRIEF.md §12 has it unticked"
     ]
 
@@ -140,7 +140,7 @@ def test_missing_pin_fails_instead_of_passing() -> None:
 
 
 def test_tool_on_disk_without_a_row_is_reported() -> None:
-    found = dg.table_findings(CLAUDE, SKILLS | {"ob-docs"}, AGENTS, HOOKS | {"docs-guard"})
+    found = dg.table_findings(CLAUDE, SKILLS | {"ob-docs"}, AGENTS, HOOKS | {"docs_guard"})
     assert found == [
         "CLAUDE.md: Skills table has no row for `ob-docs`",
         "CLAUDE.md: Hooks table has no row for `docs-guard`",
@@ -190,7 +190,7 @@ def _hook(monkeypatch: pytest.MonkeyPatch, root: Path, file_path: str) -> int:
 
 
 def test_check_mode_exits_1_on_drift(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    root = _repo(tmp_path, README.replace("| In progress |", "| Done |"))
+    root = _repo(tmp_path, DRIFTED_README)
     monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(root))
     assert dg.main(["--check"]) == 1
 
@@ -205,7 +205,7 @@ def test_check_mode_passes_a_consistent_repo(
 def test_hook_reports_drift_after_a_doc_edit(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    root = _repo(tmp_path, README.replace("| In progress |", "| Done |"))
+    root = _repo(tmp_path, DRIFTED_README)
     assert _hook(monkeypatch, root, "README.md") == 2
     assert "step 2 is 'Done'" in capsys.readouterr().err
 
@@ -214,12 +214,12 @@ def test_hook_reports_drift_after_a_doc_edit(
 def test_hook_ignores_edits_that_cant_change_a_record(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, file_path: str
 ) -> None:
-    root = _repo(tmp_path, README.replace("| In progress |", "| Done |"))
+    root = _repo(tmp_path, DRIFTED_README)
     assert _hook(monkeypatch, root, file_path) == 0
 
 
 def test_hook_ignores_files_outside_the_project(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    root = _repo(tmp_path / "repo", README.replace("| In progress |", "| Done |"))
+    root = _repo(tmp_path / "repo", DRIFTED_README)
     assert _hook(monkeypatch, root, "../elsewhere/README.md") == 0
