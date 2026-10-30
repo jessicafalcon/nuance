@@ -120,7 +120,7 @@ def main() -> int:
     print(
         "Review agents are read-only. Allowed: uv run --frozen pytest/pyright/ruff check/"
         "ruff format --check, uv audit --frozen, the boundary and content guards on named "
-        "files, objection-brief <command> --help, git diff/log/show/status/merge-base/"
+        "files, the docs guard with --check, objection-brief <command> --help, git diff/log/show/status/merge-base/"
         "rev-parse/ls-files/grep/branch --show-current with no global options, gh pr "
         "view/diff/checks. No chaining, redirection, variables or file-writing flags. "
         "Report the finding instead of changing anything.",

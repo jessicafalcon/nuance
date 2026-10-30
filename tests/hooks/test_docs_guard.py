@@ -74,11 +74,25 @@ def test_done_row_for_unticked_step_is_reported() -> None:
     ]
 
 
-def test_ticked_step_without_done_row_is_reported() -> None:
+def test_ticked_step_without_done_row_or_status_line_is_reported() -> None:
     brief = BRIEF.replace("- [ ] 2.", "- [x] 2.")
     assert dg.step_findings(brief, README, CLAUDE) == [
-        "README.md: step 2 is 'In progress' but PROJECT-BRIEF.md §12 has it ticked"
+        "README.md: step 2 is 'In progress' but PROJECT-BRIEF.md §12 has it ticked",
+        "CLAUDE.md: Current status has no 'Build step 2 (...): merged' line, "
+        "the latest step PROJECT-BRIEF.md §12 ticks",
     ]
+
+
+def test_older_merged_steps_may_be_condensed_out_of_the_status() -> None:
+    brief = BRIEF.replace("- [ ] 2.", "- [x] 2.")
+    readme = DRIFTED_README
+    claude = CLAUDE.replace("**Build step 1 (scaffold):**", "**Build step 2 (themes):**")
+    assert dg.step_findings(brief, readme, claude) == []
+
+
+def test_missing_current_status_fails_instead_of_passing() -> None:
+    claude = CLAUDE.replace("## Current status", "## Status notes")
+    assert dg.step_findings(BRIEF, README, claude) == ["CLAUDE.md: '## Current status' is missing"]
 
 
 def test_merged_status_for_unticked_step_is_reported() -> None:
@@ -148,10 +162,12 @@ def test_tool_on_disk_without_a_row_is_reported() -> None:
 
 
 def test_row_without_a_tool_on_disk_is_reported() -> None:
-    found = dg.table_findings(CLAUDE, set(), set(), HOOKS)
+    found = dg.table_findings(CLAUDE, set(), set(), {"git_guard"})
     assert found == [
         "CLAUDE.md: Skills table lists `ob-craft`, but there is no .claude/skills/ob-craft/SKILL.md",
         "CLAUDE.md: Agents table lists `ob-reviewer`, but there is no .claude/agents/ob-reviewer.md",
+        "CLAUDE.md: Hooks table lists `reviewer-bash-allowlist`, but there is no "
+        ".claude/hooks/reviewer-bash-allowlist.py or .sh",
     ]
 
 
@@ -190,15 +206,15 @@ def _hook(monkeypatch: pytest.MonkeyPatch, root: Path, file_path: str) -> int:
 
 
 def test_check_mode_exits_1_on_drift(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    root = _repo(tmp_path, DRIFTED_README)
-    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(root))
+    monkeypatch.chdir(_repo(tmp_path, DRIFTED_README))
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(REPO))  # ignored in --check mode
     assert dg.main(["--check"]) == 1
 
 
 def test_check_mode_passes_a_consistent_repo(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(_repo(tmp_path)))
+    monkeypatch.chdir(_repo(tmp_path))
     assert dg.main(["--check"]) == 0
 
 
@@ -208,6 +224,32 @@ def test_hook_reports_drift_after_a_doc_edit(
     root = _repo(tmp_path, DRIFTED_README)
     assert _hook(monkeypatch, root, "README.md") == 2
     assert "step 2 is 'Done'" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "file_path",
+    [
+        "pyproject.toml",
+        ".pre-commit-config.yaml",
+        ".github/workflows/ci.yml",
+        ".claude/hooks/new_guard.py",
+        ".claude/skills/ob-craft/SKILL.md",
+    ],
+)
+def test_hook_runs_after_a_record_config_or_hook_edit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, file_path: str
+) -> None:
+    assert _hook(monkeypatch, _repo(tmp_path, DRIFTED_README), file_path) == 2
+
+
+@pytest.mark.parametrize("tool_input", [{}, {"file_path": ""}, None])
+def test_hook_without_a_file_path_passes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, tool_input: object
+) -> None:
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(_repo(tmp_path, DRIFTED_README)))
+    payload = {"tool_name": "Edit", "tool_input": tool_input}
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(payload)))
+    assert dg.main([]) == 0
 
 
 @pytest.mark.parametrize("file_path", ["src/objection_brief/weaknesses.py", "data/labels.yaml"])

@@ -10,9 +10,8 @@ transcripts are synthetic. No real vendor, customer or person appears in this re
 
 ## Status
 
-**In development: build steps 1 and 2 of 8 are merged (repository scaffold and checks; the
-six objection themes and their loader). There is no pipeline yet, so the tool cannot be
-run.**
+**In development: the table below shows which build steps are merged. There is no
+pipeline yet, so the tool cannot be run.**
 
 | Step | Scope | State |
 |---|---|---|

@@ -5,7 +5,9 @@ Covers the drift that can be computed, not prose that restates a rule (the "stat
 rule in CLAUDE.md and ob-docs-auditor cover that):
 
 - **Build steps:** each PROJECT-BRIEF.md §12 checkbox matches its README status row
-  ("Done" if and only if ticked), and a CLAUDE.md "Build step N ...: merged" line is ticked.
+  ("Done" if and only if ticked). In CLAUDE.md "Current status", every "Build step N
+  ...: merged" line is ticked, and the latest ticked step has one; older steps may be
+  condensed away.
 - **Pinned versions:** uv (pyproject.toml `required-version`) and gitleaks (its
   .pre-commit-config.yaml rev) match the uv-lock hook rev, CI's gitleaks VERSION and every
   "uv X.Y.Z" / "gitleaks X.Y.Z" in the Markdown records. Other spellings are not matched.
@@ -17,10 +19,12 @@ make it pass silently.
 
 Entry points:
 
-- Claude Code PostToolUse hook (payload on stdin): after an edit to a Markdown file or a
-  pinned config, checks the whole repo and exits 2 with the findings. A record update
+- Claude Code PostToolUse hook (payload on stdin): after an edit to a Markdown file, a
+  file in .claude/hooks/ or a pinned config (pyproject.toml, .pre-commit-config.yaml,
+  the CI workflow), checks the whole repo and exits 2 with the findings. A record update
   spans several files, so a finding mid-update is expected; finish the update.
-- pre-commit and CI (`--check`): checks the whole repo, exits 1 on findings.
+- pre-commit and CI (`--check`): checks the repo in the working directory (pre-commit
+  runs from the root), exits 1 on findings.
 """
 
 from __future__ import annotations
@@ -96,13 +100,21 @@ def step_findings(brief: str, readme: str, claude: str) -> list[str]:
         for n, done in sorted(ticked.items())
         if done != (rows[n] == "Done")
     ]
-    for n in sorted(
-        {int(n) for n in re.findall(r"\*\*Build step (\d+)\b[^*]*:\*\* merged", claude)}
-    ):
-        if not ticked.get(n):
-            found.append(
-                f"{CLAUDE}: Current status says step {n} is merged; {BRIEF} §12 doesn't tick it"
-            )
+    status = section(claude, "Current status")
+    if status is None:
+        return [*found, f"{CLAUDE}: '## Current status' is missing"]
+    merged = {int(n) for n in re.findall(r"\*\*Build step (\d+)\b[^*]*:\*\* merged", status)}
+    found += [
+        f"{CLAUDE}: Current status says step {n} is merged; {BRIEF} §12 doesn't tick it"
+        for n in sorted(merged)
+        if not ticked.get(n)
+    ]
+    latest = max((n for n, done in ticked.items() if done), default=None)
+    if latest is not None and latest not in merged:
+        found.append(
+            f"{CLAUDE}: Current status has no 'Build step {latest} (...): merged' line, "
+            f"the latest step {BRIEF} §12 ticks"
+        )
     return found
 
 
@@ -183,8 +195,11 @@ def watched(rel_path: str) -> bool:
 
 
 def main(argv: list[str]) -> int:
-    root = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path.cwd()).resolve()
     hook_mode = argv != ["--check"]
+    # pre-commit and CI run from the repository root; only the hook needs the project
+    # directory, so a stray CLAUDE_PROJECT_DIR can't point a commit's check elsewhere.
+    project = os.environ.get("CLAUDE_PROJECT_DIR") if hook_mode else None
+    root = Path(project or Path.cwd()).resolve()
     if hook_mode:
         payload = json.load(sys.stdin)
         raw = (payload.get("tool_input") or {}).get("file_path", "")
