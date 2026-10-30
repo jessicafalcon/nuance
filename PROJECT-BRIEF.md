@@ -286,7 +286,7 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 - [x] 5. `llm.py` (with the replay cache, §7.6) + `detect.py` → **checkpoint:** run live on 2 transcripts, inspect raw JSON, commit their cache entries; the same run with `--offline` makes no call
 - [x] 6. `brief.py`, `notify.py`, `log.py` + tests → **checkpoint:** `run-all` produces briefs in `out/briefs/`; the cache covers every transcript and `test_pipeline.py` replays `run-all --offline`
 - [x] 7. `eval` for both models → **checkpoint:** `reports/eval_<model>.md` committed for both; `test_pipeline.py` regenerates them offline and they match
-- [ ] 8. README → **checkpoint:** final review
+- [x] 8. README → **checkpoint:** final review
 
 ## 13. Acceptance criteria
 
@@ -332,3 +332,4 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 | `excel_interop.detect_when` keeps its second clause ("expects that reporting layouts will end up rebuilt in spreadsheets anyway") (§6.1) | It can match a neutral remark, but neither eval report (Claude Haiku 5.5, Claude Sonnet 5.5, `detect-v2`) shows a false positive from it, and t03's and t08's positives lean on it; a prompt change is made when a report shows the problem |
 | Untrusted text in a user turn goes through `llm.tagged`, which escapes a closing tag inside it; `detect-v2` and `follow-up-v4` (§7.1, §7.3) | A transcript or quote holding `</transcript>` or `</quote>` would end its block early and read as instructions. Only the tag is escaped, so every other character stays verbatim and quotes still match; a quote of the escaped tag fails the guardrail. Fixed before the Claude Sonnet 5.5 recording so its answers are recorded once |
 | An answer unusable as a whole is scored as finding nothing, with its tokens counted; a missing recording or a failed call writes no report (§9) | A refusal is the model's result and counts against it; a cache miss or an outage is not, and a report scored on part of the test set would understate the misses |
+| The README's weekly cost assumes 500 calls a week, at the synthetic transcripts' length and at 10,000 input tokens per call (§11) | Neither the team's call volume nor real call length is known; stating both inputs lets a reader redo the estimate |

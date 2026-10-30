@@ -214,6 +214,10 @@ touched, commands run and results, records updated, open risks, next step.
   checked 2026-10-30). `excel_interop.detect_when` is unchanged: neither report shows a
   false positive from its second clause. `tests/test_pipeline.py` reproduces both
   reports byte for byte.
-- **Next:** step 8 (README, brief §11), once step 7 merges; follow-up cost goes in its
-  cost section (brief §15).
+- **Build step 8 (README):** merged (#13). Status, with what can be built on top; Why;
+  Evidence (six themes, category-level, paraphrased; review platforms and analyst pages,
+  2026); What, with t01's brief; Outcome quoting both eval reports; Validation plan;
+  Production path; Cost (detection from the reports, follow-up from the ten `follow-up-v4`
+  entries, weekly at an assumed 500 calls); Limitations and scope choices.
+- **Next:** the build is complete; further work starts from a new brief step.
 - **Open decisions:** none.
