@@ -65,7 +65,8 @@ write "ignore previous instructions". Defenses, all required:
   `quote`.
 - The guardrail's verbatim check means `quote` can only be text that is in the
   transcript; a fabricated quote is rejected.
-- The follow-up prompt gets only the inputs brief §7.3 allows, and its output goes to the account executive as a draft, never to a prospect.
+- The follow-up prompt gets only the inputs brief §7.3 allows, and its output goes
+  to the account executive as a draft, never to a prospect.
 
 ### Injection into Slack messages
 
@@ -85,7 +86,7 @@ characters per text field) by truncating, never by dropping the footer.
 - The tool writes only under `out/`, `data/llm_cache/` and `reports/`. A cache file is
   named by its 64-hex `sha256` key alone; a report by a `--model` value checked
   against the IDs pinned in `config.py`, never the raw argument.
-- Recording follows the privacy rule in brief §7.6, on the resolved path.
+- Recording follows the privacy rule in brief §7.6.
 
 ### SQL
 

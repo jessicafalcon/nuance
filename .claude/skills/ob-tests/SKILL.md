@@ -45,7 +45,7 @@ table adds what §10 doesn't say.
 
 | Module | Must prove, beyond brief §10 |
 |---|---|
-| `guardrail` | Curly quotes pass; an unknown speaker fails; each rejection carries its `RejectReason` |
+| `guardrail` | Curly quotes pass; a confidence equal to the threshold passes; an unknown speaker fails; each rejection carries its `RejectReason` |
 | `brief` | `<`, `>`, `&` and `<!channel>` in a quote are escaped; long text truncates but the footer survives |
 | `detect` | A recorded tool input parses into `Detection`s; a missing field or an out-of-enum value becomes a recorded rejection, not an exception |
 | `notify` | No webhook → file under `out/briefs/` with a validated name; webhook error → `NotifyError` whose message has no URL |

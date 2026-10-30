@@ -30,7 +30,7 @@ Known product weaknesses (e.g. complex access permissions, Excel round-trips, pr
 
 Every detection is logged so objection frequency by theme can be analysed later.
 
-**Non-goals (do not build):** web app, FastAPI, React, dbt, Terraform, cloud deployment, multi-agent setups, auto-sending emails, a stuck-trial signal. These go in the README "Production path" section only.
+**Non-goals (do not build):** web app, FastAPI, React, dbt, Terraform, cloud deployment, multi-agent setups, auto-sending emails, email integration, scheduling, a stuck-trial signal. These go in the README "Production path" section only.
 
 ## 4. Tech stack
 

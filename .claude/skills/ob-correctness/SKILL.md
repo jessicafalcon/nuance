@@ -49,15 +49,16 @@ visibly placeholders in the draft.
 
 ### 5. Synthetic and neutral content
 
-- The hard rules in brief §1 cover code, data, comments, docs, commits and PRs. The
+- The hard rules in brief §1 apply to commits and PRs too (CLAUDE.md, principle 1). The
   content guard blocks the known vendor names by digest; the review agents check the
   rest.
 - Every theme stays a draft owned "to validate" (brief §6.1); the loader enforces it.
 
 ### 6. Honest evaluation
 
-- Every number comes from the generated report brief §9 specifies, never typed by
-  hand, and the README quotes it the way §9 says, caveat included.
+- Every number comes from the generated report brief §9 specifies, scored against
+  `labels.yaml` (§6.3), never typed by hand; the README quotes it the way §9 says,
+  caveat included.
 - Price constants in `config.py` also carry the date they were checked.
 
 ### 7. Every model call is replayable
