@@ -13,7 +13,7 @@ is published the moment it's pushed.
 
 ```text
 src/objection_brief/  the pipeline: config, weaknesses, llm (the only model edge), detect,
-                      guardrail, brief, notify, log, cli
+                      guardrail, brief, notify, log, evaluate, cli
 data/                 weaknesses.yaml, synthetic transcripts/, labels.yaml, llm_cache/ (recorded model responses)
 scripts/              report.sql
 reports/              eval_<model>.md, generated offline from data/llm_cache/
@@ -33,7 +33,7 @@ out/                  gitignored: briefs, the DuckDB file
 3. **Reproducible.** Every model call replays from the committed cache; the pipeline
    and the eval run offline in CI, and the README quotes only committed reports.
 4. **Nothing disappears silently.** Every detection is logged, kept or rejected, with
-   a reason.
+   a reason; the eval lists its own in its report.
 5. **Small, typed, tested, offline.** One job per module, one owner per dependency,
    one test per non-trivial unit, no network in tests.
 6. **Smallest scope.** When unsure, choose the smaller option and note it in the README

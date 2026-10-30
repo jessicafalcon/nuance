@@ -128,5 +128,7 @@ def test_values_the_guardrail_judges_still_parse() -> None:
 )
 def test_unusable_answer_raises(output: str, stop_reason: str, message: str) -> None:
     call = FakeCall(_answer(output, stop_reason))
-    with pytest.raises(DetectError, match=message):
+    with pytest.raises(DetectError, match=message) as raised:
         detect(TRANSCRIPT, THEMES, call=call, model=config.detect_model)
+    # The eval counts an unusable answer's tokens, so the error carries it.
+    assert raised.value.answer is call.answer

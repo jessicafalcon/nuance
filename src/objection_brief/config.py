@@ -15,16 +15,21 @@ __all__ = [
     "detect_max_tokens",
     "detect_model",
     "detect_prompt_version",
+    "eval_models",
     "follow_up_effort",
     "follow_up_max_tokens",
     "follow_up_model",
     "follow_up_prompt_version",
+    "labels_file",
     "llm_cache_dir",
     "load_settings",
     "log_db",
     "max_retries",
     "max_transcript_bytes",
     "min_confidence",
+    "prices_checked",
+    "prices_usd_per_mtok",
+    "reports_dir",
     "request_timeout_s",
     "themes_file",
     "transcript_id_pattern",
@@ -51,6 +56,19 @@ follow_up_prompt_version: Final = "follow-up-v3"
 follow_up_effort: Final = "low"
 follow_up_max_tokens: Final = 4000
 
+# The models `eval` compares (brief §9). `--model` accepts only these, and each names its
+# report, `reports/eval_<model>.md`.
+eval_models: Final = (detect_model, "claude-sonnet-5-5")
+# USD per million input and output tokens, as Anthropic's pricing page listed them on
+# `prices_checked`; verify against Anthropic's pricing page before quoting a cost.
+# Haiku's price holds for prompts up to 100,000 tokens; a transcript within
+# `max_transcript_bytes` is about 50,000 at most.
+prices_usd_per_mtok: Final = {
+    "claude-haiku-5-5": (0.10, 0.50),
+    "claude-sonnet-5-5": (2.00, 10.00),
+}
+prices_checked: Final = "2026-10-30"
+
 # Per-call limits on the model client, so a hung or failing call can't stall a run.
 request_timeout_s: Final = 60.0
 max_retries: Final = 2
@@ -59,7 +77,10 @@ max_retries: Final = 2
 # recorded only for transcripts under `transcripts_dir` (brief §7.6).
 themes_file: Final = Path("data/weaknesses.yaml")
 transcripts_dir: Final = Path("data/transcripts")
+labels_file: Final = Path("data/labels.yaml")
 llm_cache_dir: Final = Path("data/llm_cache")
+# The eval reports, committed (brief §9).
+reports_dir: Final = Path("reports")
 # Run outputs, gitignored: the briefs `notify` writes when no webhook is set, and the
 # detections log (brief §7.4, §7.5).
 briefs_dir: Final = Path("out/briefs")

@@ -5,23 +5,18 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-import yaml
 
+from objection_brief.evaluate import load_labels
 from objection_brief.weaknesses import load_themes
 
 DATA = Path(__file__).parents[1] / "data"
 TRANSCRIPTS = sorted((DATA / "transcripts").glob("*.txt"))
-LABELS: dict[str, list[str]] = yaml.safe_load((DATA / "labels.yaml").read_text("utf-8"))
 THEME_IDS = {theme.id for theme in load_themes(DATA / "weaknesses.yaml")}
-
-
-def test_labels_cover_exactly_the_transcripts() -> None:
-    assert sorted(LABELS) == [path.stem for path in TRANSCRIPTS]
-
-
-def test_label_themes_exist_in_the_themes_file() -> None:
-    for stem, themes in LABELS.items():
-        assert set(themes) <= THEME_IDS, stem
+# Loaded by the eval's loader, so the committed labels pass every check the eval applies:
+# one entry per transcript, no stem listed twice, only known themes, none repeated.
+LABELS = load_labels(
+    DATA / "labels.yaml", stems=[path.stem for path in TRANSCRIPTS], theme_ids=THEME_IDS
+)
 
 
 def test_positives_cover_every_theme() -> None:

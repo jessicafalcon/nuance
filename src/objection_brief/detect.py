@@ -80,6 +80,12 @@ class DetectResult:
 class DetectError(Exception):
     """The answer as a whole is unusable: refused, cut off, or not the expected JSON."""
 
+    def __init__(self, message: str, answer: ModelResult | None = None) -> None:
+        super().__init__(message)
+        # Set by `detect`, so an unusable answer's tokens and recording date still count
+        # in the eval report (brief §9).
+        self.answer = answer
+
 
 _SYSTEM = """\
 You find sales objections that a prospect raises in a sales call transcript.
@@ -142,7 +148,7 @@ def detect(
     """Make the one detection call for a transcript and parse its answer.
 
     Raises:
-        DetectError: the answer as a whole is unusable.
+        DetectError: the answer as a whole is unusable; the error carries it.
     """
     answer = call(
         model=model,
@@ -154,8 +160,11 @@ def detect(
         max_tokens=config.detect_max_tokens,
     )
     if answer.stop_reason != "end_turn":
-        raise DetectError(f"the model stopped with {answer.stop_reason!r}, not 'end_turn'")
-    detections, malformed = parse_objections(answer.output)
+        raise DetectError(f"the model stopped with {answer.stop_reason!r}, not 'end_turn'", answer)
+    try:
+        detections, malformed = parse_objections(answer.output)
+    except DetectError as error:
+        raise DetectError(str(error), answer) from None
     return DetectResult(detections, malformed, answer)
 
 

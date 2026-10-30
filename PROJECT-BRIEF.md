@@ -75,6 +75,7 @@ nuance/                        # GitHub repo; package objection_brief, CLI objec
 │   ├── brief.py               # build Block Kit message + follow-up draft
 │   ├── notify.py              # Slack webhook or mock
 │   ├── log.py                 # append detections to DuckDB
+│   ├── evaluate.py            # load labels, score detections, write the eval report
 │   └── cli.py                 # run / eval commands
 ├── scripts/
 │   └── report.sql             # objections by theme
@@ -193,6 +194,7 @@ DuckDB table `detections` (BigQuery-compatible types):
 DuckDB accepts these names except `FLOAT64`, which it spells `DOUBLE`. One row per detection, a malformed item included
 (no theme, quote or confidence); the token columns hold the usage of the detection call on each of its rows; `created_at` is UTC.
 Detections are logged before the brief is built, so a failed follow-up or delivery still leaves the record.
+`run` and `run-all` log; `eval` does not (§9).
 
 `scripts/report.sql`: objection count by theme, kept vs rejected.
 
@@ -231,9 +233,16 @@ uv run objection-brief eval --model claude-sonnet-5-5 --offline
 
 `eval` prints and saves `reports/eval_<model>.md` (committed; `--model` accepts only the IDs pinned in `config.py`) with:
 - the model, and the date its responses were recorded (the latest `recorded_at` among the entries read)
-- precision and recall per theme and overall (after guardrail)
-- guardrail rejections by reason
-- total tokens and estimated cost (price constants in `config.py`, marked "verify against Anthropic's pricing page")
+- precision and recall per theme and overall (after guardrail), over (transcript, theme) pairs: a theme counts
+  once per transcript however many kept detections name it
+- each transcript's expected and kept themes, naming every miss and false positive
+- guardrail rejections by reason, and each rejected item by transcript, theme and reason
+- total tokens and estimated cost (price constants in `config.py` with the date they were checked, marked "verify against Anthropic's pricing page")
+
+`labels.yaml` is loaded strictly: a stem listed twice, a missing or extra stem, or an unknown or repeated theme
+is an error. An answer that is unusable as a whole (§7.1) is scored as finding nothing and named in the report,
+its tokens counted; a missing recording or a failed call writes no report. The eval makes detection calls only
+and logs nothing to DuckDB: its report lists what it rejected (§15).
 
 The report is generated from the cache and reads no clock, so `eval --offline` reproduces it byte for byte;
 `test_pipeline.py` regenerates it in CI and fails if it differs from the committed file. The README quotes only
@@ -318,3 +327,6 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 | `guardrail.count_rejections` requires the malformed items (§7.2) | One counter for `run`, `run-all` and the eval, which no caller can call without them |
 | Follow-up drafts are checked in code and withheld with a reason; a missing or failed call fails the transcript; Claude Haiku 5.5 writes them (§7.3) | The prompt asks for grounding, and the slot and figure checks verify part of it at no cost. Recorded drafts proposed times nobody gave (follow-up-v1), so the prompt forbids them; asked to copy the proof word for word, the model still reworded it around its `[PLACEHOLDER]` marker in 3 of 10 drafts (follow-up-v2), so the code inserts it instead (follow-up-v3). A missing recording shown as "no draft" would pass CI. Haiku is the smaller option (§14) |
 | Follow-up cost is stated in the README's cost section, not in the eval report (§9, §11) | The eval report scores detection for two models; the follow-up runs only in `run`/`run-all`, on Claude Haiku 5.5 |
+| `eval` logs nothing to DuckDB; its report lists every miss, false positive and rejected item (§7.5, §9) | The Claude Haiku 5.5 eval replays the answers `run-all` already logged, so logging them again would count each objection twice in `report.sql` |
+| The eval's labels loader rejects a stem listed twice, a missing or extra stem, and an unknown or repeated theme; `test_data.py` loads the labels through it (§9) | `yaml.safe_load` keeps the last of two equal keys, so a duplicated stem would be scored against whichever entry came last |
+| An answer unusable as a whole is scored as finding nothing, with its tokens counted; a missing recording or a failed call writes no report (§9) | A refusal is the model's result and counts against it; a cache miss or an outage is not, and a report scored on part of the test set would understate the misses |
