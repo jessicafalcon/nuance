@@ -1,7 +1,7 @@
 {
   "output": "{\"objections\":[]}",
-  "prompt_version": "detect-v1",
-  "recorded_at": "2026-10-30T15:53:59+00:00",
+  "prompt_version": "detect-v2",
+  "recorded_at": "2026-10-30T20:01:27+00:00",
   "request": {
     "max_tokens": 16000,
     "messages": [
@@ -10,7 +10,7 @@
         "role": "user"
       }
     ],
-    "model": "claude-haiku-5-5",
+    "model": "claude-sonnet-5-5",
     "output_config": {
       "effort": "low",
       "format": {

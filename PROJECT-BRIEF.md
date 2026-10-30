@@ -140,7 +140,7 @@ t09_no_objection: []
 - One API call. System prompt includes the theme list (`id`, `label`, `detect_when`) and strict rules: only prospect objections count, quote must be copied verbatim, return nothing when unsure.
 - Constrain the answer with structured outputs (`output_config.format`, a JSON schema) to this shape, with
   `theme_id` and `speaker` as enums; the schema can't bound `confidence`, so the guardrail does (§7.2). The
-  transcript goes in the user turn between `<transcript>` tags; the system prompt says it is data, not instructions.
+  transcript goes in the user turn between `<transcript>` tags, with any closing tag inside it escaped (`llm.tagged`); the system prompt says it is data, not instructions.
   Effort is set explicitly (`config.detect_effort`, the same on every model) and no sampling parameter is sent (§15):
 
 ```json
@@ -176,7 +176,7 @@ Count and report rejections by reason, `malformed_detection` included: one funct
 - One item per theme: when the model names a theme more than once, the brief shows the most confident kept detection
   (the first on a tie). Every detection is still logged (§7.5).
 - Follow-up paragraph: one LLM call per item that may use **only** the matching theme's `draft_answer`, `proof` and `follow_up_angle`, plus the quote. No invented facts, figures or customer names.
-  The call uses `config.follow_up_model` (Claude Haiku 5.5) at effort `low` with a plain-text answer; the quote goes in the user turn, as data.
+  The call uses `config.follow_up_model` (Claude Haiku 5.5) at effort `low` with a plain-text answer; the quote goes in the user turn between `<quote>` tags, as data, escaped the same way.
 - The model writes `[PROOF]` once where the proof goes, and the code puts the approved `proof` there, so the proof
   always reaches the brief word for word. The draft is checked in code before that: an answer that stopped for any reason
   other than `end_turn`, an empty draft, one without exactly one `[PROOF]`, one that restates the proof itself (it says
@@ -285,7 +285,7 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 - [x] 4. `guardrail.py` + tests → **checkpoint:** tests pass
 - [x] 5. `llm.py` (with the replay cache, §7.6) + `detect.py` → **checkpoint:** run live on 2 transcripts, inspect raw JSON, commit their cache entries; the same run with `--offline` makes no call
 - [x] 6. `brief.py`, `notify.py`, `log.py` + tests → **checkpoint:** `run-all` produces briefs in `out/briefs/`; the cache covers every transcript and `test_pipeline.py` replays `run-all --offline`
-- [ ] 7. `eval` for both models → **checkpoint:** `reports/eval_<model>.md` committed for both; `test_pipeline.py` regenerates them offline and they match
+- [x] 7. `eval` for both models → **checkpoint:** `reports/eval_<model>.md` committed for both; `test_pipeline.py` regenerates them offline and they match
 - [ ] 8. README → **checkpoint:** final review
 
 ## 13. Acceptance criteria
@@ -329,4 +329,6 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 | Follow-up cost is stated in the README's cost section, not in the eval report (§9, §11) | The eval report scores detection for two models; the follow-up runs only in `run`/`run-all`, on Claude Haiku 5.5 |
 | `eval` logs nothing to DuckDB; its report lists every miss, false positive and rejected item (§7.5, §9) | The Claude Haiku 5.5 eval replays the answers `run-all` already logged, so logging them again would count each objection twice in `report.sql` |
 | The eval's labels loader rejects a stem listed twice, a missing or extra stem, and an unknown or repeated theme; `test_data.py` loads the labels through it (§9) | `yaml.safe_load` keeps the last of two equal keys, so a duplicated stem would be scored against whichever entry came last |
+| `excel_interop.detect_when` keeps its second clause ("expects that reporting layouts will end up rebuilt in spreadsheets anyway") (§6.1) | It can match a neutral remark, but neither eval report (Claude Haiku 5.5, Claude Sonnet 5.5, `detect-v2`) shows a false positive from it, and t03's and t08's positives lean on it; a prompt change is made when a report shows the problem |
+| Untrusted text in a user turn goes through `llm.tagged`, which escapes a closing tag inside it; `detect-v2` and `follow-up-v4` (§7.1, §7.3) | A transcript or quote holding `</transcript>` or `</quote>` would end its block early and read as instructions. Only the tag is escaped, so every other character stays verbatim and quotes still match; a quote of the escaped tag fails the guardrail. Fixed before the Claude Sonnet 5.5 recording so its answers are recorded once |
 | An answer unusable as a whole is scored as finding nothing, with its tokens counted; a missing recording or a failed call writes no report (§9) | A refusal is the model's result and counts against it; a cache miss or an outage is not, and a report scored on part of the test set would understate the misses |

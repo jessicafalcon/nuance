@@ -1,7 +1,7 @@
 {
-  "output": "You're right that setting up permissions so each of your fifty budget owners sees only their own cost center takes deliberate planning, and we don't pretend otherwise. Our onboarding handles this with role-based templates that give you a starting structure, plus a guided permissions session included as part of onboarding, so your team isn't building the model from scratch. [PROOF] If it would help, I'd suggest a 30-minute permissions design session with one of our solutions consultants, where we can map your budget owners to the right access levels and see how it would look for your organization.",
-  "prompt_version": "follow-up-v3",
-  "recorded_at": "2026-10-30T16:08:48+00:00",
+  "output": "You're right that scoping access so each of your fifty budget owners sees only their own cost center takes deliberate setup, and we don't pretend otherwise. To make that manageable, onboarding includes role-based permission templates and a guided permissions session, so your team isn't starting from a blank configuration. [PROOF] If it would help, I'd suggest a 30-minute permissions design session with one of our solutions consultants, where we can map your budget owners to the right access levels and see how much of the work the templates cover for your structure.",
+  "prompt_version": "follow-up-v4",
+  "recorded_at": "2026-10-30T20:00:15+00:00",
   "request": {
     "max_tokens": 4000,
     "messages": [
@@ -19,6 +19,6 @@
   "stop_reason": "end_turn",
   "usage": {
     "input_tokens": 500,
-    "output_tokens": 173
+    "output_tokens": 166
   }
 }

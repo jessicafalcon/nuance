@@ -10,8 +10,9 @@ transcripts are synthetic. No real vendor, customer or person appears in this re
 
 ## Status
 
-**In development: the table below shows which build steps are merged. The `run` command
-detects and checks the objections in one transcript; briefs come in step 6.**
+**In development: the table below shows which build steps are merged. `run` and `run-all`
+detect, check and brief the objections in the transcripts; `eval` scores detection
+against the labels for two models.**
 
 | Step | Scope | State |
 |---|---|---|
@@ -21,7 +22,7 @@ detects and checks the objections in one transcript; briefs come in step 6.**
 | 4 | Guardrail (verbatim quote, speaker, confidence) | Done |
 | 5 | Detection through the Anthropic API | Done |
 | 6 | Brief, Slack or file output, DuckDB log | Done |
-| 7 | Evaluation against labels, for two models | Not started |
+| 7 | Evaluation against labels, for two models | Done |
 | 8 | Full README: evidence, results, validation plan, cost, limitations | Not started |
 
 The plan, scope and component specs are in [PROJECT-BRIEF.md](PROJECT-BRIEF.md).
@@ -47,8 +48,8 @@ transcript.txt → detect (one model call, structured output)
 Nothing is sent to prospects. Every brief is a draft for a person to review.
 
 Model responses are recorded in a committed cache (`data/llm_cache/`) and replayed, so
-the pipeline and the evaluation run offline, without an API key; from step 7, CI will
-check that the committed evaluation reports reproduce exactly.
+the pipeline and the evaluation run offline, without an API key; CI checks that the
+committed evaluation reports in `reports/` reproduce exactly.
 
 ## Development setup
 

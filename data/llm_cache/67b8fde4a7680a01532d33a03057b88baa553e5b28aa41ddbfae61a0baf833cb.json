@@ -1,7 +1,7 @@
 {
-  "output": "I hear the concern: budget owners who aren't finance specialists shouldn't need someone sitting beside them to do their job. Model building does have a learning curve, and most non-finance users should start by entering and reviewing numbers rather than designing models. Role-based input views are built for that, so your headteachers see only the inputs they own. Onboarding includes admin training, and once a trained internal admin is in place, routine model changes are handled by your own team rather than by a consultant. For example, [PROOF] Would it help to set up a hands-on session where two of your non-finance budget owners complete a real input task in a sandbox, so you can judge the experience for yourself?",
-  "prompt_version": "follow-up-v3",
-  "recorded_at": "2026-10-30T16:09:00+00:00",
+  "output": "I hear you: a model that only a finance specialist can change would leave your budget owners stuck, and that concern is fair. Model building does have a learning curve, and most non-finance users should start by entering and reviewing numbers rather than designing models. Our role-based input views are set up for exactly that, and onboarding includes admin training so that a trained internal admin, not a consultant, handles routine model changes. For example, [PROOF] Your team would keep control of those changes after training. If it would help, I'd like to offer a hands-on session where two of your non-finance budget owners complete a real input task in a sandbox, so you can judge how it feels for your own people.",
+  "prompt_version": "follow-up-v4",
+  "recorded_at": "2026-10-30T20:00:45+00:00",
   "request": {
     "max_tokens": 4000,
     "messages": [
@@ -19,6 +19,6 @@
   "stop_reason": "end_turn",
   "usage": {
     "input_tokens": 546,
-    "output_tokens": 210
+    "output_tokens": 207
   }
 }

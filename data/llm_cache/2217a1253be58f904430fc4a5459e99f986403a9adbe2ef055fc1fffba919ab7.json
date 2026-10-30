@@ -1,12 +1,12 @@
 {
-  "output": "Thank you for raising this. You're right that per-seat pricing rises as more people use the platform, and it's fair to want that to stay predictable as your group grows. Two things can help. Occasional users, such as some headteachers who only need to review reports, can be on our lower-cost contributor and viewer seat types instead of a full licence. And a multi-year term can cap the annual increase. For example, [PROOF]. I'd be glad to send a three-year cost model based on your expected user mix, with the renewal cap options side by side, so you can compare them before we talk again.",
-  "prompt_version": "follow-up-v3",
-  "recorded_at": "2026-10-30T16:09:02+00:00",
+  "output": "You're right to plan for that: if headcount doubles over two years, per-seat pricing will grow with it, and the second renewal could look very different from today's quote. For occasional users, we have lower-cost contributor and viewer seat types, so you don't need to pay full price for everyone who only needs occasional access. Multi-year terms can also cap the annual increase. For a sense of scale, here is the approved example: [PROOF] I'd be glad to model the three-year cost at your expected user count, with the renewal cap options side by side, so you can compare them before deciding. Would you like me to send that over?",
+  "prompt_version": "follow-up-v4",
+  "recorded_at": "2026-10-30T20:00:41+00:00",
   "request": {
     "max_tokens": 4000,
     "messages": [
       {
-        "content": "<quote>\nIf all twenty-two headteachers need a licence, the cost goes up every time we open or take on a school.\n</quote>",
+        "content": "<quote>\nWe're planning to double headcount over two years, so a per-seat price that looks fine today could look very different by the second renewal.\n</quote>",
         "role": "user"
       }
     ],
@@ -18,7 +18,7 @@
   },
   "stop_reason": "end_turn",
   "usage": {
-    "input_tokens": 535,
-    "output_tokens": 180
+    "input_tokens": 540,
+    "output_tokens": 190
   }
 }

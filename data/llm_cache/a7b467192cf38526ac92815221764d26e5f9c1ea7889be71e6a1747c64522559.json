@@ -1,7 +1,7 @@
 {
-  "output": "{\"objections\":[{\"theme_id\":\"consolidation_depth\",\"quote\":\"Ideally this would replace the tool we use for our statutory consolidation, because running two systems at month end is what we're trying to get away from.\",\"speaker\":\"prospect\",\"confidence\":0.85}]}",
-  "prompt_version": "detect-v1",
-  "recorded_at": "2026-10-30T15:53:37+00:00",
+  "output": "{\"objections\":[{\"theme_id\":\"consolidation_depth\",\"quote\":\"We do. And that's the second question. Ideally this would replace the tool we use for our statutory consolidation, because running two systems at month end is what we're trying to get away from.\",\"speaker\":\"prospect\",\"confidence\":0.9}]}",
+  "prompt_version": "detect-v2",
+  "recorded_at": "2026-10-30T20:01:11+00:00",
   "request": {
     "max_tokens": 16000,
     "messages": [
@@ -10,7 +10,7 @@
         "role": "user"
       }
     ],
-    "model": "claude-haiku-5-5",
+    "model": "claude-sonnet-5-5",
     "output_config": {
       "effort": "low",
       "format": {
@@ -71,6 +71,6 @@
   "stop_reason": "end_turn",
   "usage": {
     "input_tokens": 2363,
-    "output_tokens": 90
+    "output_tokens": 100
   }
 }

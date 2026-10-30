@@ -1,7 +1,7 @@
 {
-  "output": "{\"objections\":[{\"theme_id\":\"performance_at_scale\",\"quote\":\"We have about six thousand SKUs across thirty-two distribution points, and the last tool we tried took four minutes to recalculate the forecast.\",\"speaker\":\"prospect\",\"confidence\":0.95},{\"theme_id\":\"performance_at_scale\",\"quote\":\"If a recalculation takes minutes, my planners will just go back to their spreadsheets, and the project is dead.\",\"speaker\":\"prospect\",\"confidence\":0.9}]}",
-  "prompt_version": "detect-v1",
-  "recorded_at": "2026-10-30T15:53:34+00:00",
+  "output": "{\"objections\":[{\"theme_id\":\"performance_at_scale\",\"quote\":\"If a recalculation takes minutes, my planners will just go back to their spreadsheets, and the project is dead.\",\"speaker\":\"prospect\",\"confidence\":0.93}]}",
+  "prompt_version": "detect-v2",
+  "recorded_at": "2026-10-30T20:01:09+00:00",
   "request": {
     "max_tokens": 16000,
     "messages": [
@@ -10,7 +10,7 @@
         "role": "user"
       }
     ],
-    "model": "claude-haiku-5-5",
+    "model": "claude-sonnet-5-5",
     "output_config": {
       "effort": "low",
       "format": {
@@ -71,6 +71,6 @@
   "stop_reason": "end_turn",
   "usage": {
     "input_tokens": 2366,
-    "output_tokens": 166
+    "output_tokens": 83
   }
 }

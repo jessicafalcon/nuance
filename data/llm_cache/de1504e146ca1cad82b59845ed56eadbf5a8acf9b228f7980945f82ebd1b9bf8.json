@@ -1,7 +1,7 @@
 {
-  "output": "{\"objections\":[{\"theme_id\":\"learning_curve_non_finance\",\"quote\":\"My worry is that our clinic managers aren't spreadsheet people, and if they can't update their own staffing numbers this ends up back on my desk.\",\"speaker\":\"prospect\",\"confidence\":0.85},{\"theme_id\":\"learning_curve_non_finance\",\"quote\":\"The template has formulas everywhere. If they type over one, the totals break, and they don't know how to fix it. A few of them have stopped trying.\",\"speaker\":\"prospect\",\"confidence\":0.6}]}",
-  "prompt_version": "detect-v1",
-  "recorded_at": "2026-10-30T15:53:28+00:00",
+  "output": "{\"objections\":[{\"theme_id\":\"learning_curve_non_finance\",\"quote\":\"My worry is that our clinic managers aren't spreadsheet people, and if they can't update their own staffing numbers this ends up back on my desk.\",\"speaker\":\"prospect\",\"confidence\":0.93}]}",
+  "prompt_version": "detect-v2",
+  "recorded_at": "2026-10-30T20:01:04+00:00",
   "request": {
     "max_tokens": 16000,
     "messages": [
@@ -10,7 +10,7 @@
         "role": "user"
       }
     ],
-    "model": "claude-haiku-5-5",
+    "model": "claude-sonnet-5-5",
     "output_config": {
       "effort": "low",
       "format": {
@@ -71,6 +71,6 @@
   "stop_reason": "end_turn",
   "usage": {
     "input_tokens": 2449,
-    "output_tokens": 182
+    "output_tokens": 97
   }
 }

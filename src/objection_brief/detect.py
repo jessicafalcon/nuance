@@ -9,7 +9,7 @@ from enum import StrEnum
 from typing import Any, cast
 
 from objection_brief import config
-from objection_brief.llm import JSON, ModelCall, ModelResult
+from objection_brief.llm import JSON, ModelCall, ModelResult, tagged
 from objection_brief.weaknesses import Theme
 
 __all__ = [
@@ -159,7 +159,7 @@ def detect(
         prompt_version=config.detect_prompt_version,
         system=system_prompt(themes),
         # The transcript is untrusted, so it goes in the user turn, never the system one.
-        messages=[{"role": "user", "content": f"<transcript>\n{transcript}\n</transcript>"}],
+        messages=[{"role": "user", "content": tagged("transcript", transcript)}],
         output_config=output_config(themes),
         max_tokens=config.detect_max_tokens,
     )

@@ -43,7 +43,7 @@ min_confidence: Final = 0.6
 detect_model: Final = "claude-haiku-5-5"
 # Bump on any change to the detection prompt's text or output schema (brief §7.6). The
 # cache key changes with the text anyway; the version names the change for a reader.
-detect_prompt_version: Final = "detect-v1"
+detect_prompt_version: Final = "detect-v2"
 # The same effort on every model, so the eval compares like with like. Thinking counts
 # against `detect_max_tokens`, which leaves room for it.
 detect_effort: Final = "low"
@@ -52,7 +52,7 @@ detect_max_tokens: Final = 16000
 # The follow-up paragraph (brief §7.3): the smaller model, as for detection. Bump the
 # version on any change to the follow-up prompt's text (brief §7.6).
 follow_up_model: Final = "claude-haiku-5-5"
-follow_up_prompt_version: Final = "follow-up-v3"
+follow_up_prompt_version: Final = "follow-up-v4"
 follow_up_effort: Final = "low"
 follow_up_max_tokens: Final = 4000
 

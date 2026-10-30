@@ -60,6 +60,8 @@ write "ignore previous instructions". Defenses, all required:
 
 - The transcript goes in the user turn, wrapped in a delimited block, never in the
   system prompt. The system prompt says the block is data to analyze, not instructions.
+  `llm.tagged` builds the block and escapes a closing tag inside the text, so the text
+  can't end the block early; the follow-up's quote goes through it too.
 - Structured outputs with a JSON schema: `theme_id` and `speaker` are enums,
   `confidence` is a number the guardrail bounds to [0, 1]. The model has no free-text
   channel into the brief except `quote`.

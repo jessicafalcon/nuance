@@ -19,9 +19,6 @@ LABELS = load_labels(
     stems=[p.stem for p in (REPO / config.transcripts_dir).glob("*.txt")],
     theme_ids=[t.id for t in load_themes(REPO / config.themes_file)],
 )
-# The models whose detection answers are committed; Claude Sonnet 5.5's join after its
-# live run, and from then every model in `config.eval_models`.
-RECORDED_MODELS = ("claude-haiku-5-5",)
 
 
 @pytest.fixture
@@ -67,7 +64,7 @@ def test_run_all_offline_replays_the_committed_cache(
     assert sorted(first) == sorted(stem for stem, themes in LABELS.items() if themes)
 
 
-@pytest.mark.parametrize("model", RECORDED_MODELS)
+@pytest.mark.parametrize("model", config.eval_models)
 def test_eval_offline_reproduces_the_committed_report(repo: Path, model: str) -> None:
     # The step 7 checkpoint (brief §12): the report reads no clock, so a replay matches
     # the committed file byte for byte.
@@ -83,7 +80,7 @@ def test_eval_offline_reproduces_the_committed_report(repo: Path, model: str) ->
 
 def test_committed_reports_are_exactly_the_recorded_models() -> None:
     assert sorted(p.name for p in (REPO / config.reports_dir).iterdir()) == sorted(
-        f"eval_{model}.md" for model in RECORDED_MODELS
+        f"eval_{model}.md" for model in config.eval_models
     )
 
 
@@ -93,7 +90,7 @@ def test_every_committed_entry_is_read_and_none_written(repo: Path, replayed: se
     entries = sorted(p.name for p in cache.iterdir())
 
     assert main(["run-all", "--offline"]) == 0
-    for model in RECORDED_MODELS:
+    for model in config.eval_models:
         assert main(["eval", "--model", model, "--offline"]) == 0
 
     assert replayed == set(entries)
@@ -101,7 +98,7 @@ def test_every_committed_entry_is_read_and_none_written(repo: Path, replayed: se
 
 
 def test_a_theme_named_twice_appears_once_with_its_clearest_quote(repo: Path) -> None:
-    # The recorded t01 answer names access_permissions at 0.95 and at 0.6 (brief §15).
+    # The recorded t01 answer names access_permissions at 0.95 and at 0.85 (brief §15).
     assert main(["run", "data/transcripts/t01_permissions.txt", "--offline"]) == 0
     brief = json.loads((repo / config.briefs_dir / "t01_permissions.json").read_text("utf-8"))
     texts = [b["text"]["text"] for b in brief["blocks"] if b["type"] == "section"]
@@ -111,4 +108,4 @@ def test_a_theme_named_twice_appears_once_with_its_clearest_quote(repo: Path) ->
     ]
     said = next(t for t in texts if t.startswith("*Prospect said:*"))
     assert "fifty budget owners only sees their own cost center" in said
-    assert "My bigger worry is what happens after." not in json.dumps(brief)
+    assert "I see weeks of work" not in json.dumps(brief)
