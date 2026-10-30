@@ -118,7 +118,7 @@ Other themes, same fields:
 - `consolidation_depth` — complex multi-entity consolidation (answer must be honest about limits and suggest a realistic path)
 - `pricing_escalation` — seat-based cost growth and annual price increases
 
-Validation: unique `id`s, all fields present, `status: draft`.
+Validation: unique `id`s in lowercase snake_case (they become schema enum values and log columns), every field present and non-empty, no unknown fields, `status: draft`, `owner` containing "to validate". A failure names the theme and the field.
 
 ### 6.2 `data/transcripts/`
 
@@ -249,7 +249,7 @@ Tests must not call the API.
 One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked when its PR merges.
 
 - [x] 1. Scaffold repo, `pyproject.toml`, `.env.example`, `.gitignore`, `CLAUDE.md`, security hooks, CI → **checkpoint:** `uv run pytest` runs (only the hook tests so far)
-- [ ] 2. `weaknesses.yaml` + loader + `test_weaknesses.py` → **checkpoint:** tests pass
+- [x] 2. `weaknesses.yaml` + loader + `test_weaknesses.py` → **checkpoint:** tests pass
 - [ ] 3. Synthetic transcripts + `labels.yaml` → **checkpoint:** I review them before continuing
 - [ ] 4. `guardrail.py` + tests → **checkpoint:** tests pass
 - [ ] 5. `llm.py` (with the replay cache, §7.6) + `detect.py` → **checkpoint:** run live on 2 transcripts, inspect raw JSON, commit their cache entries; the same run with `--offline` makes no call

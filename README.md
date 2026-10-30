@@ -10,13 +10,14 @@ transcripts are synthetic. No real vendor, customer or person appears in this re
 
 ## Status
 
-**In development: build step 1 of 8 is merged (repository scaffold and checks); step 2 is
-in progress. There is no pipeline code yet, so the tool cannot be run.**
+**In development: build steps 1 and 2 of 8 are merged (repository scaffold and checks; the
+six objection themes and their loader). There is no pipeline yet, so the tool cannot be
+run.**
 
 | Step | Scope | State |
 |---|---|---|
 | 1 | Scaffold, security hooks, CI | Done |
-| 2 | Objection themes (`weaknesses.yaml`) and loader | In progress |
+| 2 | Objection themes (`weaknesses.yaml`) and loader | Done |
 | 3 | Synthetic transcripts and labels | Not started |
 | 4 | Guardrail (verbatim quote, speaker, confidence) | Not started |
 | 5 | Detection through the Anthropic API | Not started |
