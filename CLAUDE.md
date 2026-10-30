@@ -185,6 +185,12 @@ touched, commands run and results, records updated, open risks, next step.
   `data/transcripts/` (t01–t08 positives covering all six themes, t07 and t08 with two
   themes; t09–t12 the four negatives in brief §6.2), one speaker turn per line;
   `data/labels.yaml` keyed by file stem.
-- **Next:** step 4 on `feat/guardrail`, `guardrail.py` and `tests/test_guardrail.py`
-  (brief §7.2, §10).
-- **Open decisions:** none.
+- **Build step 4 (guardrail):** merged (#8). `guardrail.check` →
+  one `Verdict` per detection, the first failing check naming its `RejectReason`
+  (brief §7.2, including the single-`PROSPECT:`-turn rule); `normalize` serves both
+  sides of the match; `config.min_confidence` 0.6. `detect.py` holds only `Speaker`
+  and `Detection` so far.
+- **Next:** a small PR adding `tests/test_data.py` (the transcript and label
+  invariants from #7), then step 5 on `feat/detect` (brief §7.1, §7.6).
+- **Open decisions:** whether to tighten `excel_interop.detect_when`'s second clause
+  waits for recorded model answers (step 5 or 7).
