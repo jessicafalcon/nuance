@@ -195,14 +195,19 @@ touched, commands run and results, records updated, open risks, next step.
   `objection-brief run <transcript> [--offline]` prints the raw answer and the verdicts.
   Checkpoint run: live answers for t01 and t11 recorded in `data/llm_cache/` (Claude
   Haiku 5.5, 2026-10-30); `tests/test_cli.py` replays both offline.
-- **Next:** step 6 on `feat/brief` (brief §7.3–§7.5), starting with the two step 6
-  open decisions below.
+- **Build step 6 (brief, notify, log, `run-all`):** merged (#11). One brief
+  item per theme (its most confident kept detection); `guardrail.count_rejections` takes
+  the malformed items too; logged before the brief. The follow-up (Claude Haiku 5.5,
+  `follow-up-v3`) writes a `[PROOF]` slot the code fills, and a draft that fails a check
+  is withheld with its reason; the v1 and v2 recordings, and why each changed, are in
+  #11's commits (brief §15). `run-all --offline` writes briefs for t01–t08 only, and
+  `tests/test_pipeline.py` replays it. Briefs go to `out/briefs/`; the Slack path is
+  tested with fakes only.
+- **Next:** step 7 (brief §9), once step 6 merges.
 - **Open decisions:**
-  - Step 6: the t01 answer names `access_permissions` twice despite the "at most once"
-    rule, the second a lead-in kept at exactly 0.6. Either the brief shows one item per
-    theme (highest confidence) or the prompt changes, which re-records the entries.
-  - Step 6: `cli` adds malformed items to `guardrail.count_rejections` by hand; with
-    `run-all` and the log, one function should count every rejection, malformed included.
+  - Step 7 or later: a quote or transcript containing `</quote>` or `</transcript>`
+    closes its tag early; the guardrail limits the effect, and fixing `detect` re-records
+    every detection entry.
   - Tightening `excel_interop.detect_when`'s second clause, deferred until recorded
     model answers exist (step 5 or 7).
   - Step 7: `yaml.safe_load` keeps the last of two equal keys, so a duplicated stem in

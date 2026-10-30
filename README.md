@@ -20,7 +20,7 @@ detects and checks the objections in one transcript; briefs come in step 6.**
 | 3 | Synthetic transcripts and labels | Done |
 | 4 | Guardrail (verbatim quote, speaker, confidence) | Done |
 | 5 | Detection through the Anthropic API | Done |
-| 6 | Brief, Slack or file output, DuckDB log | In review |
+| 6 | Brief, Slack or file output, DuckDB log | Done |
 | 7 | Evaluation against labels, for two models | Not started |
 | 8 | Full README: evidence, results, validation plan, cost, limitations | Not started |
 
