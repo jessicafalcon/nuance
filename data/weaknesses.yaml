@@ -1,0 +1,129 @@
+# Objection themes for Northwind Planning, a fictional planning software company.
+#
+# Each theme is a category-level weakness that recurs in public reviews of planning
+# software, described in our own words. Example signals are paraphrased and synthetic;
+# proof points are placeholders until a real, approved story replaces them. Every
+# answer is a draft for Product Marketing and Sales Enablement to validate.
+#
+# Loaded and validated by src/objection_brief/weaknesses.py: unique ids, every field
+# present, status draft, owner marked "to validate".
+
+- id: access_permissions
+  label: Complex access permissions
+  detect_when: >-
+    Prospect worries that setting up who-sees-what (for example, budget owners seeing
+    only their own cost center) is complicated or needs vendor help.
+  example_signals:
+    - "setting up permissions for every budget owner sounds painful"
+    - "will we need your team every time we change who sees what"
+  draft_answer: >-
+    Acknowledge that granular permissions take deliberate setup. Explain the role-based
+    templates and the guided permissions session included in onboarding.
+  proof: "[PLACEHOLDER] customer story: mid-market company scoped cost-center access in onboarding"
+  follow_up_angle: Offer a 30-minute permissions design session with a solutions consultant.
+  status: draft
+  owner: Product Marketing / Sales Enablement (to validate)
+
+- id: learning_curve_non_finance
+  label: Steep learning curve outside finance
+  detect_when: >-
+    Prospect worries that people outside the finance team (department heads, operations,
+    sales leaders) won't be able to build or change models on their own and will depend
+    on consultants or a central admin.
+  example_signals:
+    - "our department heads aren't spreadsheet people, can they actually use this"
+    - "I don't want to call a consultant every time we add a driver"
+  draft_answer: >-
+    Acknowledge that model building has a learning curve and that most non-finance users
+    should start by entering and reviewing numbers, not designing models. Explain the
+    role-based input views, the admin training included in onboarding, and that a
+    trained internal admin, not a consultant, handles routine model changes.
+  proof: "[PLACEHOLDER] customer story: operations team updated its own headcount drivers after admin training"
+  follow_up_angle: >-
+    Offer a hands-on session where two of their non-finance budget owners complete a
+    real input task in a sandbox.
+  status: draft
+  owner: Product Marketing / Sales Enablement (to validate)
+
+- id: excel_interop
+  label: Excel and spreadsheet round-trips
+  detect_when: >-
+    Prospect worries about moving data to and from Excel or Google Sheets, or expects
+    that reporting layouts will end up rebuilt in spreadsheets anyway.
+  example_signals:
+    - "my team will still export everything to Excel to format the board pack"
+    - "how painful is it to get numbers back in after someone edits them in a sheet"
+  draft_answer: >-
+    Acknowledge that spreadsheets stay part of most finance workflows. Explain the
+    spreadsheet add-in for two-way refresh and write-back, and the formatted report
+    templates that cover the common board and management layouts. Be clear that highly
+    custom layouts may still be finished in a spreadsheet.
+  proof: "[PLACEHOLDER] customer story: finance team replaced a manual monthly export with add-in refresh"
+  follow_up_angle: >-
+    Offer to rebuild one of their current spreadsheet reports in a short working session
+    to show where the add-in fits and where it doesn't.
+  status: draft
+  owner: Product Marketing / Sales Enablement (to validate)
+
+- id: performance_at_scale
+  label: Slow performance on large models
+  detect_when: >-
+    Prospect worries that the interface becomes slow, or that calculations time out,
+    when models grow large (many entities, products, versions or long time ranges).
+  example_signals:
+    - "we heard these tools crawl once you load a few years of SKU-level data"
+    - "if a forecast recalculation takes minutes, people will go back to spreadsheets"
+  draft_answer: >-
+    Acknowledge that very large models can slow down and that model design matters as
+    much as the platform. Explain the model design review during implementation and the
+    option to test performance on a sample of their own data before signing.
+  proof: "[PLACEHOLDER] benchmark: recalculation time on a model sized like the prospect's"
+  follow_up_angle: >-
+    Offer a performance test on an anonymized sample of their largest model, with the
+    results shared before any commitment.
+  status: draft
+  owner: Product Marketing / Sales Enablement (to validate)
+
+- id: consolidation_depth
+  label: Limits on complex multi-entity consolidation
+  detect_when: >-
+    Prospect needs complex multi-entity consolidation (intercompany eliminations,
+    partial ownership, multiple currencies or accounting standards) and asks whether
+    the product can replace their consolidation or close tool.
+  example_signals:
+    - "we have partial ownership in a few subsidiaries, can you handle the minority interest"
+    - "would this replace the tool we use for our statutory consolidation"
+  draft_answer: >-
+    Be direct: the product consolidates entities for planning and management reporting,
+    including currency translation and standard intercompany eliminations, but it is
+    not built for statutory consolidation with partial ownership, minority interest or
+    several accounting standards. Recommend keeping the current close and consolidation
+    tool for statutory reporting and loading its consolidated actuals into planning. If
+    they want to go further, propose scoping a proof of concept on their real entity
+    structure before any commitment, rather than promising coverage.
+  proof: "[PLACEHOLDER] customer story: group plans in the product and loads actuals from its existing close tool"
+  follow_up_angle: >-
+    Offer a working session with a solutions consultant to map their entity structure
+    and agree which parts stay in the close tool and which move to planning.
+  status: draft
+  owner: Product Marketing / Sales Enablement (to validate)
+
+- id: pricing_escalation
+  label: Seat-based cost growth and annual price increases
+  detect_when: >-
+    Prospect worries that cost will grow quickly as more users need access, or that
+    the price will rise at each renewal.
+  example_signals:
+    - "if every budget owner needs a seat, this gets expensive fast"
+    - "what stops the price from jumping at renewal like our last vendor did"
+  draft_answer: >-
+    Acknowledge that per-seat pricing grows with adoption. Explain the lower-cost
+    contributor and viewer seat types for occasional users, and that multi-year terms
+    can cap the annual increase. Offer to model the cost at their expected user count
+    over three years.
+  proof: "[PLACEHOLDER] pricing example: three-year cost for a company with mostly contributor seats"
+  follow_up_angle: >-
+    Send a three-year cost model at their expected user mix, with the renewal cap
+    options side by side.
+  status: draft
+  owner: Product Marketing / Sales Enablement (to validate)
