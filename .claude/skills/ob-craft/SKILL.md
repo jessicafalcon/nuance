@@ -63,7 +63,7 @@ a value that never changes, no `utils.py`.
 - Records crossing a module boundary are `@dataclass(frozen=True, slots=True)`:
   `Theme`, `Detection`, `Verdict`, `Usage`. Fixed vocabularies are `StrEnum`
   (`Speaker`, `RejectReason`).
-- Validate at the boundary (YAML load, model tool output, CLI arguments), then trust
+- Validate at the boundary (YAML load, model output, CLI arguments), then trust
   the type inside.
 
 ## Model calls
@@ -82,7 +82,7 @@ a value that never changes, no `utils.py`.
   pass a fake with the same keywords.
 - Entries are one JSON file per key, written to a temp file and `os.replace`d; a
   corrupt entry is an error naming the file, never a silent re-call.
-- Structured output by **structured outputs** (`output_config.format`, a JSON schema);
+- Detection uses **structured outputs** (`output_config.format`, a JSON schema);
   `theme_id` and `speaker` are `enum`s in the schema, so the model can't invent a value.
   Not forced tool use: Claude Sonnet 5.5 rejects it (brief §15).
 - Pinned model IDs, prompt versions and effort from `config.py`; no `temperature` or

@@ -70,7 +70,7 @@ nuance/                        # GitHub repo; package objection_brief, CLI objec
 │   ├── config.py              # model ids, thresholds, price constants
 │   ├── weaknesses.py          # load + validate weaknesses.yaml
 │   ├── llm.py                 # call_model(): the one function that calls a model provider
-│   ├── detect.py              # detect(transcript) -> list[Detection]
+│   ├── detect.py              # detect(transcript, themes, ...) -> DetectResult
 │   ├── guardrail.py           # verbatim-quote check + confidence filter
 │   ├── brief.py               # build Block Kit message + follow-up draft
 │   ├── notify.py              # Slack webhook or mock
@@ -135,7 +135,7 @@ t09_no_objection: []
 
 ## 7. Component specs
 
-### 7.1 `detect(transcript) -> list[Detection]`
+### 7.1 `detect(transcript, themes, *, call, model) -> DetectResult`
 - One API call. System prompt includes the theme list (`id`, `label`, `detect_when`) and strict rules: only prospect objections count, quote must be copied verbatim, return nothing when unsure.
 - Constrain the answer with structured outputs (`output_config.format`, a JSON schema) to this shape, with
   `theme_id` and `speaker` as enums; the schema can't bound `confidence`, so the guardrail does (§7.2). The
@@ -164,7 +164,7 @@ Keep a detection only if all are true. A rejection carries the `RejectReason` of
 - `quote` appears in the transcript after normalising whitespace, quotes and case, starting and ending on word boundaries (`quote_not_found`; an empty quote fails too)
 - `speaker == "prospect"` (`speaker_not_prospect`)
 - `quote` sits inside a single `PROSPECT:` turn, with the same normalisation and boundaries (`quote_not_prospect`), so a rep's words labelled as the prospect's, or a quote spanning two turns, fail
-- `confidence` is in [0, 1], so NaN fails (`invalid_confidence`), and `>= config.min_confidence`, 0.6 (`low_confidence`); that it is a number is checked when `detect` parses the tool output
+- `confidence` is in [0, 1], so NaN fails (`invalid_confidence`), and `>= config.min_confidence`, 0.6 (`low_confidence`); that it is a number is checked when `detect` parses the answer
 - `theme_id` exists in `weaknesses.yaml` (`unknown_theme`)
 
 Count and report rejections by reason.
@@ -191,7 +191,8 @@ Every model call goes through `llm.call_model()`, which reads and writes a respo
   any change to a prompt's text or schema bumps its version.
 - **Entry:** `data/llm_cache/<key>.json` holds the key's inputs, the answer's text, `stop_reason`, token usage
   and `recorded_at` (UTC, set when the live call returns), written atomically. Never the API key or any header.
-- **Modes:** default: a hit replays, a miss calls the API and records the entry. `--offline`: a miss is an error
+- **Modes:** default: a hit replays, a miss calls the API and records the entry, an unusable answer (refused, cut
+  off) included, so a run reproduces its failures too; deleting the entry makes the next run call again. `--offline`: a miss is an error
   naming the key and prompt version, which `cli.py` reports with the transcript ID; no call is made. CI and tests
   are always offline.
 - **Privacy:** entries are recorded only for transcripts whose resolved path (symlinks followed) is under
@@ -259,7 +260,7 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 - [x] 2. `weaknesses.yaml` + loader + `test_weaknesses.py` → **checkpoint:** tests pass
 - [x] 3. Synthetic transcripts + `labels.yaml` → **checkpoint:** I review them before continuing
 - [x] 4. `guardrail.py` + tests → **checkpoint:** tests pass
-- [ ] 5. `llm.py` (with the replay cache, §7.6) + `detect.py` → **checkpoint:** run live on 2 transcripts, inspect raw JSON, commit their cache entries; the same run with `--offline` makes no call
+- [x] 5. `llm.py` (with the replay cache, §7.6) + `detect.py` → **checkpoint:** run live on 2 transcripts, inspect raw JSON, commit their cache entries; the same run with `--offline` makes no call
 - [ ] 6. `brief.py`, `notify.py`, `log.py` + tests → **checkpoint:** `run-all` produces briefs in `out/briefs/`; the cache covers every transcript and `test_pipeline.py` replays `run-all --offline`
 - [ ] 7. `eval` for both models → **checkpoint:** `reports/eval_<model>.md` committed for both; `test_pipeline.py` regenerates them offline and they match
 - [ ] 8. README → **checkpoint:** final review
