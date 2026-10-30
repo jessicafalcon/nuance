@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 from objection_brief import config
-from objection_brief.detect import Detection, RejectReason, Speaker
+from objection_brief.detect import Detection, Malformed, RejectReason, Speaker
 from objection_brief.weaknesses import Theme
 
 __all__ = ["Verdict", "check", "count_rejections", "normalize"]
@@ -99,9 +99,17 @@ def check(
     return tuple(Verdict(detection, reason(detection)) for detection in detections)
 
 
-def count_rejections(verdicts: Iterable[Verdict]) -> Counter[RejectReason]:
-    """Count rejected verdicts by reason, for the `run` output and the eval report."""
-    return Counter(v.reject_reason for v in verdicts if v.reject_reason is not None)
+def count_rejections(
+    verdicts: Iterable[Verdict], malformed: Iterable[Malformed]
+) -> Counter[RejectReason]:
+    """Count every rejection by reason, the items `detect` couldn't parse included.
+
+    `malformed` is required so no caller counts the guardrail's rejections alone; the
+    CLI and the eval report both count through here.
+    """
+    counts = Counter(v.reject_reason for v in verdicts if v.reject_reason is not None)
+    counts[RejectReason.MALFORMED_DETECTION] += sum(1 for _ in malformed)
+    return +counts
 
 
 def _prospect_turns(transcript: str) -> tuple[str, ...]:

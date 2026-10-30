@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from objection_brief import config
-from objection_brief.detect import Detection, RejectReason, Speaker
+from objection_brief.detect import Detection, Malformed, RejectReason, Speaker
 from objection_brief.guardrail import Verdict, check, count_rejections
 from objection_brief.weaknesses import Theme, load_themes
 
@@ -207,7 +207,7 @@ def test_every_detection_gets_a_verdict_in_order() -> None:
     assert [v.kept for v in verdicts] == [True, False, True, False]
 
 
-def test_rejections_are_counted_by_reason() -> None:
+def test_rejections_are_counted_by_reason_malformed_included() -> None:
     kept = Verdict(_detection(), None)
     verdicts = [
         kept,
@@ -215,8 +215,11 @@ def test_rejections_are_counted_by_reason() -> None:
         Verdict(_detection(), RejectReason.QUOTE_NOT_FOUND),
         Verdict(_detection(), RejectReason.LOW_CONFIDENCE),
     ]
-    assert count_rejections(verdicts) == {
+    malformed = [Malformed('{"quote": 1}', "`theme_id` is missing or not a string")]
+    assert count_rejections(verdicts, malformed) == {
         RejectReason.LOW_CONFIDENCE: 2,
         RejectReason.QUOTE_NOT_FOUND: 1,
+        RejectReason.MALFORMED_DETECTION: 1,
     }
-    assert count_rejections([kept]) == {}
+    # No zero entry for a reason that never occurred, so printed counts stay short.
+    assert count_rejections([kept], []) == {}

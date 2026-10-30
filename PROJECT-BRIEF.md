@@ -167,18 +167,32 @@ Keep a detection only if all are true. A rejection carries the `RejectReason` of
 - `confidence` is in [0, 1], so NaN fails (`invalid_confidence`), and `>= config.min_confidence`, 0.6 (`low_confidence`); that it is a number is checked when `detect` parses the answer
 - `theme_id` exists in `weaknesses.yaml` (`unknown_theme`)
 
-Count and report rejections by reason.
+Count and report rejections by reason, `malformed_detection` included: one function, `guardrail.count_rejections`, takes the verdicts and the malformed items, and `run`, `run-all` and `eval` count through it.
 
 ### 7.3 Brief
 - Build a Slack Block Kit message with the five elements from section 3, plus a footer: "Draft answer — review before using."
-- Follow-up paragraph: one LLM call that may use **only** the matching theme's `draft_answer`, `proof` and `follow_up_angle`, plus the quote. No invented facts, figures or customer names.
+  Every interpolated string is escaped for Slack (`&`, `<`, `>`) and every text field kept within Slack's limits; truncation never removes the footer.
+- One item per theme: when the model names a theme more than once, the brief shows the most confident kept detection
+  (the first on a tie). Every detection is still logged (§7.5).
+- Follow-up paragraph: one LLM call per item that may use **only** the matching theme's `draft_answer`, `proof` and `follow_up_angle`, plus the quote. No invented facts, figures or customer names.
+  The call uses `config.follow_up_model` (Claude Haiku 5.5) at effort `low` with a plain-text answer; the quote goes in the user turn, as data.
+- The model writes `[PROOF]` once where the proof goes, and the code puts the approved `proof` there, so the proof
+  always reaches the brief word for word. The draft is checked in code before that: an answer that stopped for any reason
+  other than `end_turn`, an empty draft, one without exactly one `[PROOF]`, one that restates the proof itself (it says
+  `PLACEHOLDER`), or one that states a figure in digits that isn't in its inputs is withheld, and the brief says why. No answer at all (an offline miss, a failed call) is an error for that transcript.
 
 ### 7.4 Notify
 `SLACK_WEBHOOK_URL` set → POST. Otherwise write `out/briefs/<transcript_id>.json` and print a readable preview.
+The URL must start with `https://hooks.slack.com/`, redirects are not followed, and a failure reports the HTTP status or the
+error's type, never the URL.
 
 ### 7.5 Log
 DuckDB table `detections` (BigQuery-compatible types):
 `run_id STRING, transcript_id STRING, theme_id STRING, quote STRING, confidence FLOAT64, model STRING, input_tokens INT64, output_tokens INT64, kept BOOL, reject_reason STRING, created_at TIMESTAMP`
+
+DuckDB accepts these names except `FLOAT64`, which it spells `DOUBLE`. One row per detection, a malformed item included
+(no theme, quote or confidence); the token columns hold the usage of the detection call on each of its rows; `created_at` is UTC.
+Detections are logged before the brief is built, so a failed follow-up or delivery still leaves the record.
 
 `scripts/report.sql`: objection count by theme, kept vs rejected.
 
@@ -204,7 +218,7 @@ Every model call goes through `llm.call_model()`, which reads and writes a respo
 ## 8. CLI
 
 ```
-uv run objection-brief run data/transcripts/t01_permissions.txt   # detect → guardrail → brief → notify → log
+uv run objection-brief run data/transcripts/t01_permissions.txt   # detect → guardrail → log → brief → notify
 uv run objection-brief run-all                                     # every transcript
 uv run objection-brief eval --model claude-haiku-5-5               # metrics vs labels.yaml
 uv run objection-brief eval --model claude-sonnet-5-5
@@ -249,7 +263,7 @@ Tests must not call the API.
 4. **Outcome** — eval results (precision/recall, cost per call for both models), and the metrics to measure in production: win rate on opportunities where an objection was detected, time from call to follow-up, share of drafts accepted or edited by reps, objection frequency by theme
 5. **Validation plan** — who to talk to (2 AEs, 1 solutions consultant, Product Marketing, Sales Enablement), three questions (which objections are most frequent? is handling consistent? what exists today?), and the stop condition (if objections are rare or already well handled, pivot the logging into a voice-of-customer feed for Product)
 6. **Production path** — call-recorder webhook → task queue → container service → warehouse table; detector exposed as a tool for an internal research agent; infrastructure as code. Described, not built.
-7. **Cost** — per-call and weekly estimates for both models
+7. **Cost** — per-call and weekly estimates for both models, and the follow-up call's cost per kept theme
 8. **Limitations** — synthetic data, draft answers, single-language
 
 ## 12. Build order (checkpoints)
@@ -261,7 +275,7 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 - [x] 3. Synthetic transcripts + `labels.yaml` → **checkpoint:** I review them before continuing
 - [x] 4. `guardrail.py` + tests → **checkpoint:** tests pass
 - [x] 5. `llm.py` (with the replay cache, §7.6) + `detect.py` → **checkpoint:** run live on 2 transcripts, inspect raw JSON, commit their cache entries; the same run with `--offline` makes no call
-- [ ] 6. `brief.py`, `notify.py`, `log.py` + tests → **checkpoint:** `run-all` produces briefs in `out/briefs/`; the cache covers every transcript and `test_pipeline.py` replays `run-all --offline`
+- [x] 6. `brief.py`, `notify.py`, `log.py` + tests → **checkpoint:** `run-all` produces briefs in `out/briefs/`; the cache covers every transcript and `test_pipeline.py` replays `run-all --offline`
 - [ ] 7. `eval` for both models → **checkpoint:** `reports/eval_<model>.md` committed for both; `test_pipeline.py` regenerates them offline and they match
 - [ ] 8. README → **checkpoint:** final review
 
@@ -300,3 +314,7 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 | A quote matches only on word boundaries (§7.2) | A plain substring test kept "complicated" from "uncomplicated", reversing what the prospect said; boundaries make the match stricter, never fuzzier |
 | Detection uses structured outputs (`output_config.format`) instead of a forced tool, sends no `temperature`, and sets effort `low` on every model (§7.1, §7.6) | Claude Sonnet 5.5, the eval's second model, rejects a forced `tool_choice`, and API version `2026-10-21` rejects `temperature` on every model. Reproducible numbers come from the replay cache, not from sampling; one effort level keeps the two models comparable |
 | `RejectReason` lives in `detect.py`, with `malformed_detection` for an item that doesn't parse (§7.1) | `guardrail` already imports `detect`; the reverse would be a cycle. The first module that can reject a detection holds the vocabulary |
+| The brief shows one item per theme, its most confident kept detection; the detection prompt stays as it is (§7.3) | The recorded t01 answer names `access_permissions` twice despite the "at most once" rule. A prompt rule can't guarantee it, so the code handles it either way, and a prompt change before the eval exists (step 7) can't be measured |
+| `guardrail.count_rejections` requires the malformed items (§7.2) | One counter for `run`, `run-all` and the eval, which no caller can call without them |
+| Follow-up drafts are checked in code and withheld with a reason; a missing or failed call fails the transcript; Claude Haiku 5.5 writes them (§7.3) | The prompt asks for grounding, and the slot and figure checks verify part of it at no cost. Recorded drafts proposed times nobody gave (follow-up-v1), so the prompt forbids them; asked to copy the proof word for word, the model still reworded it around its `[PLACEHOLDER]` marker in 3 of 10 drafts (follow-up-v2), so the code inserts it instead (follow-up-v3). A missing recording shown as "no draft" would pass CI. Haiku is the smaller option (§14) |
+| Follow-up cost is stated in the README's cost section, not in the eval report (§9, §11) | The eval report scores detection for two models; the follow-up runs only in `run`/`run-all`, on Claude Haiku 5.5 |
