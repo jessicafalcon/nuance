@@ -46,6 +46,10 @@ transcript.txt → detect (one model call, forced tool use)
 
 Nothing is sent to prospects. Every brief is a draft for a person to review.
 
+Model responses are recorded in a committed cache (`data/llm_cache/`) and replayed, so
+the pipeline and the evaluation run offline, without an API key, and CI checks that the
+committed evaluation reports reproduce exactly.
+
 ## Development setup
 
 Requires [uv](https://docs.astral.sh/uv/) 0.12.5 and [gitleaks](https://github.com/gitleaks/gitleaks) 8.30.1 on `PATH`.

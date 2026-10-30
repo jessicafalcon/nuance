@@ -117,6 +117,9 @@ or file names. `scripts/report.sql` is static.
 - The repo only ever holds synthetic transcripts. A real transcript or review text
   is never committed, even "temporarily"; `out/` is gitignored.
 - The DuckDB file stores quotes; it stays in `out/`.
+- `data/llm_cache/` is committed and holds full prompts and responses. Entries are
+  recorded only for transcripts under `data/transcripts/`, never hold the API key or a
+  header, and pass the content guard at commit like any file.
 
 ## Security review checklist
 
@@ -131,6 +134,6 @@ For each item, report pass, finding (with `path:line`), or not applicable:
 5. Files written outside `out/`, or named from unvalidated input?
 6. New dependency, action or tool: approved, locked, pinned by hash or SHA?
 7. Workflow changes: permissions, triggers, interpolation, credentials?
-8. Real vendor, customer, person or review text anywhere?
+8. Real vendor, customer, person or review text anywhere, cache entries included?
 9. Any check weakened: a hook, a pre-commit stage, a CI step, a ruff rule, a
    `# noqa: S...` without a reason on the same line?

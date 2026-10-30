@@ -42,8 +42,9 @@ count or result must match the code or a generated file:
 
 - README commands ↔ `cli.py` subcommands and flags ↔ `CLAUDE.md`.
 - Thresholds and model IDs ↔ `config.py` ↔ brief §4, §7.
-- Eval numbers in the README ↔ `out/eval_<model>.md` (or the copy the README cites),
-  with the model and date. A typed number with no source is a blocker.
+- Eval numbers in the README ↔ the committed `reports/eval_<model>.md`, with the model
+  and date. A typed number with no source is a blocker. The reports themselves are
+  regenerated offline in CI; a README number that differs from them is a blocker.
 - Hooks, skills and agents listed in `CLAUDE.md` ↔ `.claude/`.
 - Repo layout in brief §5 ↔ `git ls-files`.
 

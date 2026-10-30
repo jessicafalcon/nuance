@@ -14,8 +14,9 @@ is published the moment it's pushed.
 ```text
 src/objection_brief/  the pipeline: config, weaknesses, llm (the only model edge), detect,
                       guardrail, brief, notify, log, cli
-data/                 weaknesses.yaml, synthetic transcripts/, labels.yaml
+data/                 weaknesses.yaml, synthetic transcripts/, labels.yaml, llm_cache/ (recorded model responses)
 scripts/              report.sql
+reports/              eval_<model>.md, generated offline from data/llm_cache/
 tests/                one file per module, plus tests/hooks/ for the guard hooks
 out/                  gitignored: briefs, the DuckDB file, eval reports
 .claude/              settings.json, hooks/, skills/, agents/
@@ -29,11 +30,13 @@ out/                  gitignored: briefs, the DuckDB file, eval reports
 2. **Trustworthy briefs.** The guardrail is the only path to a brief; quotes are
    verbatim; answers come only from `weaknesses.yaml`; a human sends anything
    (ob-correctness).
-3. **Nothing disappears silently.** Every detection is logged, kept or rejected, with
+3. **Reproducible.** Every model call replays from the committed cache; the pipeline
+   and the eval run offline in CI, and the README quotes only committed reports.
+4. **Nothing disappears silently.** Every detection is logged, kept or rejected, with
    a reason.
-4. **Small, typed, tested, offline.** One job per module, one owner per dependency,
+5. **Small, typed, tested, offline.** One job per module, one owner per dependency,
    one test per non-trivial unit, no network in tests.
-5. **Smallest scope.** When unsure, choose the smaller option and note it in the README
+6. **Smallest scope.** When unsure, choose the smaller option and note it in the README
    (brief §14).
 
 ## What to invoke, when
@@ -44,7 +47,7 @@ remember it: the file is the current standard.
 | Moment | Invoke | Then |
 |---|---|---|
 | **Fresh clone** | `uv sync`, `uv run pre-commit install`; gitleaks 8.30.1 on `PATH` | Installs the commit, commit-msg and pre-push hooks |
-| **A live call** needs the API key or webhook | `cp .env.example .env`; the maintainer fills it, never Claude | Run with `uv run --env-file .env objection-brief ...`. A new variable goes into `.env.example` (empty) and the content and git guards' variable lists in the same change |
+| **A live call** needs the API key or webhook | `cp .env.example .env`; the maintainer fills it, never Claude | Run with `uv run --env-file .env objection-brief ...`; new answers are recorded in `data/llm_cache/` and committed with the change. Everything else runs with `--offline`. A new variable goes into `.env.example` (empty) and the content and git guards' variable lists in the same change |
 | **Writing** Python, SQL or YAML; choosing a dependency | Skill `ob-craft` | A dependency outside brief §4: ask first |
 | ↳ in `src/`, `data/` or eval logic | + skill `ob-correctness` | |
 | ↳ reading a secret, calling the model or Slack, writing a file, touching CI, hooks or a dependency | + skill `ob-security` | |
@@ -93,7 +96,7 @@ In order. Stop at the first failing step, fix, and restart from step 1.
 | Skill | Holds |
 |---|---|
 | `ob-craft` | Module map and dependency owners, the model-call function, typing, tooling |
-| `ob-correctness` | The six invariants, boundary validation, the review checklist |
+| `ob-correctness` | The seven invariants, boundary validation, the review checklist |
 | `ob-security` | Threat model, the check layers, the security review checklist |
 | `ob-tests` | Test forms, what each module must prove, fakes, offline rule |
 | `ob-voice` | Commits, PRs, comments, docstrings, Markdown tone |

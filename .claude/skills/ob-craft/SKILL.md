@@ -21,7 +21,7 @@ the model, Slack and DuckDB at the edges.
 |---|---|---|
 | `config.py` | Model IDs, thresholds, price constants; reads the environment once into a frozen settings object | `os.environ` |
 | `weaknesses.py` | Load and validate `data/weaknesses.yaml` into typed themes | — |
-| `llm.py` | `call_model(...)`: the one function that calls a model provider | `anthropic` |
+| `llm.py` | `call_model(...)`: the one function that calls a model provider, through the replay cache in `data/llm_cache/` | `anthropic` |
 | `detect.py` | Build the detection prompt and tool schema, parse the tool call into `Detection`s | — |
 | `guardrail.py` | Pure checks: verbatim quote, speaker, confidence, known theme; reasons for rejection | — |
 | `brief.py` | Block Kit message and the grounded follow-up draft | — |
@@ -69,8 +69,15 @@ a value that never changes, no `utils.py`.
 
 ## Model calls
 
-- One function, `llm.call_model(*, model, system, messages, tools, tool_choice,
-  max_tokens) -> ModelResult`, returns the parsed tool input and token usage.
+- One function, `llm.call_model(*, model, prompt_version, system, messages, tools,
+  tool_choice, max_tokens, cache: Cache) -> ModelResult`, returns the parsed tool input,
+  token usage and whether it was replayed.
+- **Replay first** (brief §7.6): the key is `sha256` of canonical JSON
+  (`json.dumps(..., sort_keys=True, separators=(",", ":"))`) of every input above plus
+  `temperature`. `Cache` is a small frozen dataclass: directory, `offline`, `record`.
+  `cli.py` builds it (`--offline`; `record` only for inputs under `data/transcripts/`).
+- Entries are one JSON file per key, written to a temp file and `os.replace`d; a
+  corrupt entry is an error naming the file, never a silent re-call.
 - Structured output by **forced tool use** with a JSON schema; `theme_id` and
   `speaker` are `enum`s in the schema, so the model can't invent a value.
 - Pinned model IDs from `config.py`; `temperature=0` for detection.

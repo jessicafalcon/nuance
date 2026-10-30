@@ -31,7 +31,9 @@ live call fails the test instead of spending money.
    ```
 2. **Unit test** for error paths and parametrized edge cases, named by behaviour:
    `test_paraphrased_quote_is_rejected`, `test_rep_speaker_is_rejected`.
-3. **Fake client** for anything that calls out: `detect` and `brief` take the model
+3. **Replay** for the pipeline: end-to-end tests run offline over the committed
+   `data/llm_cache/`, the same entries a reader replays.
+4. **Fake client** for anything that calls out: `detect` and `brief` take the model
    call as a parameter (default `llm.call_model`), so tests pass a function returning
    a recorded tool input. `notify` tests use a fake `post` callable, not the network.
 
@@ -46,6 +48,8 @@ live call fails the test instead of spending money.
 | `notify` | No webhook → file under `out/briefs/` with a validated name; webhook error → `NotifyError` whose message has no URL |
 | `log` | Kept and rejected detections both land with the right columns and types |
 | `eval` | Precision and recall on a hand-computed example, including a theme with no positives |
+| `llm` | Key stable across runs and changed by each input; a hit makes no call; an offline miss raises; inputs outside `data/transcripts/` never recorded; no entry contains the API key |
+| pipeline | `run-all --offline` and `eval --offline` over the committed cache, run twice: identical briefs and reports, and the reports equal the committed `reports/` files |
 | hooks | Every block and allow rule (tests/hooks/) |
 
 ## Fakes and fixtures
