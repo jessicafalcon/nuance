@@ -3,23 +3,31 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Final
 
 __all__ = [
     "Settings",
+    "briefs_dir",
     "detect_effort",
     "detect_max_tokens",
     "detect_model",
     "detect_prompt_version",
+    "follow_up_effort",
+    "follow_up_max_tokens",
+    "follow_up_model",
+    "follow_up_prompt_version",
     "llm_cache_dir",
     "load_settings",
+    "log_db",
     "max_retries",
     "max_transcript_bytes",
     "min_confidence",
     "request_timeout_s",
     "themes_file",
+    "transcript_id_pattern",
     "transcripts_dir",
 ]
 
@@ -36,6 +44,13 @@ detect_prompt_version: Final = "detect-v1"
 detect_effort: Final = "low"
 detect_max_tokens: Final = 16000
 
+# The follow-up paragraph (brief §7.3): the smaller model, as for detection. Bump the
+# version on any change to the follow-up prompt's text (brief §7.6).
+follow_up_model: Final = "claude-haiku-5-5"
+follow_up_prompt_version: Final = "follow-up-v1"
+follow_up_effort: Final = "low"
+follow_up_max_tokens: Final = 4000
+
 # Per-call limits on the model client, so a hung or failing call can't stall a run.
 request_timeout_s: Final = 60.0
 max_retries: Final = 2
@@ -45,6 +60,14 @@ max_retries: Final = 2
 themes_file: Final = Path("data/weaknesses.yaml")
 transcripts_dir: Final = Path("data/transcripts")
 llm_cache_dir: Final = Path("data/llm_cache")
+# Run outputs, gitignored: the briefs `notify` writes when no webhook is set, and the
+# detections log (brief §7.4, §7.5).
+briefs_dir: Final = Path("out/briefs")
+log_db: Final = Path("out/detections.duckdb")
+
+# A transcript's id is its file stem; it names files in `out/`, so `cli` and `notify`
+# both check it against this (ob-security).
+transcript_id_pattern: Final = re.compile(r"[A-Za-z0-9_-]{1,64}")
 
 # A transcript larger than this is refused before it reaches a prompt (ob-security).
 max_transcript_bytes: Final = 200_000
@@ -54,10 +77,15 @@ max_transcript_bytes: Final = 200_000
 class Settings:
     """Values read from the environment once, when the CLI starts."""
 
-    # Kept out of `repr`, so printing the settings never prints the key.
+    # Kept out of `repr`, so printing the settings never prints a secret. The webhook
+    # URL is a credential: anyone holding it can post to the channel.
     anthropic_api_key: str | None = field(default=None, repr=False)
+    slack_webhook_url: str | None = field(default=None, repr=False)
 
 
 def load_settings() -> Settings:
     """Read the environment into `Settings`; an unset or empty variable becomes `None`."""
-    return Settings(anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY") or None)
+    return Settings(
+        anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY") or None,
+        slack_webhook_url=os.environ.get("SLACK_WEBHOOK_URL") or None,
+    )
