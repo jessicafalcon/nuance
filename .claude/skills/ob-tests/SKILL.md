@@ -62,6 +62,6 @@ table adds what §10 doesn't say.
 
 ## Where tests live
 
-`tests/` mirrors `src/objection_brief/` (`test_guardrail.py`, ...), `tests/hooks/` holds
-the hook tests, doctests run from `src/` and `.claude/hooks/` (`--doctest-modules`).
+`tests/` mirrors `src/objection_brief/` (`test_guardrail.py`, ...), `test_data.py` checks
+the committed transcripts and labels, `tests/hooks/` holds the hook tests, doctests run from `src/` and `.claude/hooks/` (`--doctest-modules`).
 CI runs `uv sync --locked && uv run --frozen pytest` with no credentials.

@@ -17,7 +17,7 @@ src/objection_brief/  the pipeline: config, weaknesses, llm (the only model edge
 data/                 weaknesses.yaml, synthetic transcripts/, labels.yaml, llm_cache/ (recorded model responses)
 scripts/              report.sql
 reports/              eval_<model>.md, generated offline from data/llm_cache/
-tests/                one file per module, plus tests/hooks/ for the guard hooks
+tests/                one file per module, test_data.py for the committed data, tests/hooks/ for the guard hooks
 out/                  gitignored: briefs, the DuckDB file
 .claude/              settings.json, hooks/, skills/, agents/
 .github/              CI workflow, Dependabot, PR template
@@ -184,17 +184,18 @@ touched, commands run and results, records updated, open risks, next step.
 - **Build step 3 (transcripts and labels):** merged (#7). Twelve synthetic transcripts in
   `data/transcripts/` (t01–t08 positives covering all six themes, t07 and t08 with two
   themes; t09–t12 the four negatives in brief §6.2), one speaker turn per line;
-  `data/labels.yaml` keyed by file stem.
+  `data/labels.yaml` keyed by file stem. `tests/test_data.py` pins these invariants.
 - **Build step 4 (guardrail):** merged (#8). `guardrail.check` →
   one `Verdict` per detection, the first failing check naming its `RejectReason`
   (brief §7.2: word boundaries, a single `PROSPECT:` turn); `normalize` serves both
   sides of the match; `config.min_confidence` 0.6. `detect.py` holds only `Speaker`
   and `Detection` so far.
-- **Next:** a small PR adding `tests/test_data.py` (the transcript and label
-  invariants from #7), then step 5 on `feat/detect` (brief §7.1, §7.6).
+- **Next:** step 5 on `feat/detect` (brief §7.1, §7.6).
 - **Open decisions:**
   - Step 5: where the rejection reason for an unparseable model item lives. Likely
     `RejectReason` moves to `detect.py` with a `malformed_detection` value, so
     `detect` never imports `guardrail`.
   - Tightening `excel_interop.detect_when`'s second clause, deferred until recorded
     model answers exist (step 5 or 7).
+  - Step 7: `yaml.safe_load` keeps the last of two equal keys, so a duplicated stem in
+    `labels.yaml` passes `tests/test_data.py`; the eval's labels loader rejects it.
