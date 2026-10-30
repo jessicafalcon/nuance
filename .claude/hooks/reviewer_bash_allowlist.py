@@ -31,6 +31,7 @@ ALLOWED = re.compile(
     r"|uv run --frozen (--no-sync )?ruff (check|format --check)( .*)?"
     r"|uv audit --frozen( .*)?"
     r"|python3 \.claude/hooks/(boundary_guard|content_guard)\.py [^-].*"
+    r"|python3 \.claude/hooks/docs_guard\.py --check"
     r"|uv run --frozen (--no-sync )?objection-brief( [a-z-]+)* --help"
     r"|git (diff|log|show|status|merge-base|rev-parse|ls-files|grep|branch --show-current)( .*)?"
     r"|gh pr (view|diff|checks)( .*)?"

@@ -123,6 +123,7 @@ code or a record is right, they mark it **decide** and the maintainer chooses.
 | `git-guard` | Before every Bash call | Blocked: check bypasses, force push, push to `main`, `git add -f`, `.env` reads (search with `git grep` or `rg`, never `grep -r`), secret expansion, env dumps, `gh repo` admin, mutating `gh api`, `merge --admin`. GitHub settings changes are the maintainer's: give them the exact command to run with `!` |
 | `ruff-on-edit` | After editing a `*.py` file | Fix any unresolved lint it prints before the next edit |
 | `boundary-guard` | After editing `src/objection_brief/*.py`; pre-commit | Move the import or environment read into its owner (ob-craft module map) |
+| `docs-guard` | After editing a `*.md`, `.claude/` file or pinned config; pre-commit | The records disagree on a build step, a pinned version or a tool table. Update every record it names; mid-update this is expected |
 | `reviewer_bash_allowlist` | Every Bash call; enforced only for the two review agents | Keeps them read-only; also registered in each agent's frontmatter with `--enforce` |
 
 ## Records: every change updates its owner in the same PR
@@ -139,6 +140,9 @@ code or a record is right, they mark it **decide** and the maintainer chooses.
 - **A decision is taken:** one line in brief §15 (decision, reason), written into every
   section it affects as the current design.
 - **A command, threshold, hook or skill changes:** update every record that states it.
+- **State a fact once,** in its owner; other documents point to it ("the rules in brief
+  §6.1"). A fact that must be repeated is one `docs-guard` checks: build-step state,
+  pinned tool versions, and the skill, agent and hook tables.
 - **Code and a record disagree** and it's unclear which is right: ask the maintainer.
 
 ## Git

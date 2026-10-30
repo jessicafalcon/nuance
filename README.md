@@ -71,7 +71,8 @@ The repository is public, so checks run before anything leaves a machine and aga
 
 - **Commit:** gitleaks and a content check for API keys, webhook URLs and real vendor
   names (matched by SHA-256 digest, so the list itself names no one); ruff with security
-  rules; pyright; workflow lint (zizmor).
+  rules; pyright; workflow lint (zizmor); and a records check that the build status,
+  pinned tool versions and tool lists agree across the documents.
 - **Push:** the test suite; gitleaks and the content check over the full history,
   commit messages included; and `uv audit` on the locked dependencies.
 - **CI:** all of the above on every pull request, plus the PR title and body, with no
