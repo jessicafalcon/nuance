@@ -188,13 +188,21 @@ touched, commands run and results, records updated, open risks, next step.
 - **Build step 4 (guardrail):** merged (#8). `guardrail.check` →
   one `Verdict` per detection, the first failing check naming its `RejectReason`
   (brief §7.2: word boundaries, a single `PROSPECT:` turn); `normalize` serves both
-  sides of the match; `config.min_confidence` 0.6. `detect.py` holds only `Speaker`
-  and `Detection` so far.
-- **Next:** step 5 on `feat/detect` (brief §7.1, §7.6).
+  sides of the match; `config.min_confidence` 0.6.
+- **Build step 5 (llm and detect):** merged (#10). `llm.call_model`
+  replays from `data/llm_cache/` (brief §7.6); `detect` uses structured outputs at effort
+  `low`, no `temperature`, and owns `RejectReason` with `malformed_detection` (brief §15);
+  `objection-brief run <transcript> [--offline]` prints the raw answer and the verdicts.
+  Checkpoint run: live answers for t01 and t11 recorded in `data/llm_cache/` (Claude
+  Haiku 5.5, 2026-10-30); `tests/test_cli.py` replays both offline.
+- **Next:** step 6 on `feat/brief` (brief §7.3–§7.5), starting with the two step 6
+  open decisions below.
 - **Open decisions:**
-  - Step 5: where the rejection reason for an unparseable model item lives. Likely
-    `RejectReason` moves to `detect.py` with a `malformed_detection` value, so
-    `detect` never imports `guardrail`.
+  - Step 6: the t01 answer names `access_permissions` twice despite the "at most once"
+    rule, the second a lead-in kept at exactly 0.6. Either the brief shows one item per
+    theme (highest confidence) or the prompt changes, which re-records the entries.
+  - Step 6: `cli` adds malformed items to `guardrail.count_rejections` by hand; with
+    `run-all` and the log, one function should count every rejection, malformed included.
   - Tightening `excel_interop.detect_when`'s second clause, deferred until recorded
     model answers exist (step 5 or 7).
   - Step 7: `yaml.safe_load` keeps the last of two equal keys, so a duplicated stem in

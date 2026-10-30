@@ -71,8 +71,9 @@ its version bump, is a defect even when the output looks right.
 
 - **`weaknesses.yaml`:** the validation rules in brief §6.1; a bad file fails loading with
   the theme and field named.
-- **Model tool output:** parsed into `Detection`s; a missing field, a value outside the
-  enum or a confidence outside [0, 1] is a recorded rejection, not an exception.
+- **Model output:** parsed into `Detection`s; a missing field or a value outside the
+  enum is a `malformed_detection` rejection, and a confidence outside [0, 1] an
+  `invalid_confidence` one, never an exception.
 - **CLI input:** the transcript path exists, is a `.txt` file and is under a size cap.
 
 Fail loud on programmer error. Fail *recorded* on data error.
@@ -86,7 +87,7 @@ pyright already enforce. In order:
 2. **Boundaries:** empty transcript, a transcript with no `PROSPECT:` lines, two
    objections with the same theme, a quote with curly quotes or line breaks, a quote
    that spans speakers, an empty model answer, a theme removed from the YAML.
-3. **Failure behavior:** API timeout, 429, malformed tool output, Slack 4xx/5xx,
+3. **Failure behavior:** API timeout, 429, a refusal, malformed model output, Slack 4xx/5xx,
    DuckDB file locked. Does `run-all` continue past one bad transcript and report it?
 4. **The test:** is there one that fails if this logic breaks, with no network?
 5. **Over-engineering:** anything to delete, inline, or replace with the stdlib?

@@ -10,8 +10,8 @@ transcripts are synthetic. No real vendor, customer or person appears in this re
 
 ## Status
 
-**In development: the table below shows which build steps are merged. There is no
-pipeline yet, so the tool cannot be run.**
+**In development: the table below shows which build steps are merged. The `run` command
+detects and checks the objections in one transcript; briefs come in step 6.**
 
 | Step | Scope | State |
 |---|---|---|
@@ -19,7 +19,7 @@ pipeline yet, so the tool cannot be run.**
 | 2 | Objection themes (`weaknesses.yaml`) and loader | Done |
 | 3 | Synthetic transcripts and labels | Done |
 | 4 | Guardrail (verbatim quote, speaker, confidence) | Done |
-| 5 | Detection through the Anthropic API | Not started |
+| 5 | Detection through the Anthropic API | Done |
 | 6 | Brief, Slack or file output, DuckDB log | Not started |
 | 7 | Evaluation against labels, for two models | Not started |
 | 8 | Full README: evidence, results, validation plan, cost, limitations | Not started |
@@ -37,7 +37,7 @@ will include a validation plan.
 ## Planned design
 
 ```text
-transcript.txt → detect (one model call, forced tool use)
+transcript.txt → detect (one model call, structured output)
                → guardrail (quote must appear verbatim; prospect only; confidence ≥ 0.6; known theme)
                → brief (Slack Block Kit + a follow-up drafted only from the approved answer)
                → notify (Slack webhook if configured, otherwise out/briefs/<id>.json)
@@ -46,8 +46,8 @@ transcript.txt → detect (one model call, forced tool use)
 
 Nothing is sent to prospects. Every brief is a draft for a person to review.
 
-Model responses will be recorded in a committed cache (`data/llm_cache/`) and replayed,
-so the pipeline and the evaluation will run offline, without an API key, and CI will
+Model responses are recorded in a committed cache (`data/llm_cache/`) and replayed, so
+the pipeline and the evaluation run offline, without an API key; from step 7, CI will
 check that the committed evaluation reports reproduce exactly.
 
 ## Development setup
@@ -60,7 +60,7 @@ uv run pre-commit install   # commit, commit-msg and pre-push checks
 uv run pytest               # offline; network access fails the test
 ```
 
-Live runs (from step 5) will need an Anthropic API key: copy `.env.example` to `.env`,
+Live runs need an Anthropic API key: copy `.env.example` to `.env`,
 fill it in, and run commands with `uv run --env-file .env objection-brief ...`. Use a key
 from a workspace with a monthly spend limit.
 

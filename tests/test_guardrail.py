@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 
 from objection_brief import config
-from objection_brief.detect import Detection, Speaker
-from objection_brief.guardrail import RejectReason, Verdict, check, count_rejections
+from objection_brief.detect import Detection, RejectReason, Speaker
+from objection_brief.guardrail import Verdict, check, count_rejections
 from objection_brief.weaknesses import Theme, load_themes
 
 DATA = Path(__file__).parents[1] / "data"

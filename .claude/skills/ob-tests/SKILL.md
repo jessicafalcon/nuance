@@ -36,7 +36,8 @@ live call fails the test instead of spending money.
    `data/llm_cache/`, the same entries a reader replays.
 4. **Fake client** for anything that calls out: `detect` and `brief` take a
    `call: ModelCall` (ob-craft), so tests pass a function with `call_model`'s keywords
-   (minus `cache`) that returns a recorded tool input. `notify` tests use a fake `post` callable, not the network.
+   (minus `cache` and `api_key`) that returns a recorded answer. `llm` tests replace
+   `llm._send`, the one function that reaches the API. `notify` tests use a fake `post` callable, not the network.
 
 ## What each module must prove
 
@@ -47,7 +48,7 @@ table adds what §10 doesn't say.
 |---|---|
 | `guardrail` | Curly quotes pass; a confidence equal to the threshold passes; an unknown speaker fails; each rejection carries its `RejectReason` |
 | `brief` | `<`, `>`, `&` and `<!channel>` in a quote are escaped; long text truncates but the footer survives |
-| `detect` | A recorded tool input parses into `Detection`s; a missing field or an out-of-enum value becomes a recorded rejection, not an exception |
+| `detect` | A recorded answer parses into `Detection`s; a missing field or an out-of-enum speaker becomes a `malformed_detection` rejection, not an exception; a refused, cut-off or non-JSON answer is a `DetectError`; the transcript is only in the user turn |
 | `notify` | No webhook → file under `out/briefs/` with a validated name; webhook error → `NotifyError` whose message has no URL |
 | `log` | Kept and rejected detections both land with the right columns and types |
 | `eval` | Precision and recall on a hand-computed example, including a theme with no positives |
