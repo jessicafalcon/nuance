@@ -178,5 +178,4 @@ touched, commands run and results, records updated, open risks, next step.
   `tuple[Theme, ...]`, raising `WeaknessesError` that names the theme and field.
 - **Next:** step 3 on `feat/transcripts`, synthetic transcripts and `labels.yaml`, which
   wait for the maintainer's review before step 4.
-- **Open decisions:** whether the loader's stricter validation (brief §6.1) also gets a
-  §15 line (#4).
+- **Open decisions:** none.

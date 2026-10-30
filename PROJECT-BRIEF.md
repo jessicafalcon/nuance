@@ -222,7 +222,7 @@ Note in the README that the test set is small and synthetic, so the numbers show
 ## 10. Tests (pytest)
 
 - `test_guardrail.py`: verbatim match with whitespace/case differences passes; paraphrased quote fails; rep speaker fails; low confidence fails; unknown theme fails
-- `test_weaknesses.py`: YAML loads, ids unique, required fields present
+- `test_weaknesses.py`: YAML loads, ids unique, required fields present; each §6.1 validation rule fails with the theme and field named
 - `test_brief.py`: Block Kit JSON has the five elements and the draft footer
 
 - `test_llm.py`: the cache key is stable and changes with each input; a hit replays without a call; an offline miss
@@ -286,3 +286,4 @@ One PR per step, on its own branch (CLAUDE.md, pre-PR gate). A step is ticked wh
 | Dev tooling: ruff, pyright, pre-commit, pytest-socket; gitleaks, zizmor and `uv audit` (native to uv, used instead of pip-audit) | The repo is public: secrets, workflow and dependency checks run at commit, push and in CI |
 | Real vendor names are blocked by SHA-256 digest (`.claude/hooks/banned-terms.sha256`) | The hard rule is checked in hooks and CI without the repo naming any vendor |
 | Python 3.12 | Within §4's 3.11+; the version CI tests |
+| Theme validation is stricter than unique ids, all fields and `status: draft`: ids are lowercase snake_case, no field is empty, unknown or repeated, and `owner` contains "to validate" (§6.1) | Ids become schema enum values and log columns; a misspelled or pasted field would otherwise be ignored or silently replace the approved answer; the owner marker keeps every answer visibly unapproved |
