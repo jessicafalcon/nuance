@@ -17,6 +17,7 @@ import reviewer_bash_allowlist as rba
         "uv audit --frozen",
         "python3 .claude/hooks/content_guard.py README.md",
         "python3 .claude/hooks/boundary_guard.py src/objection_brief/detect.py",
+        "python3 .claude/hooks/docs_guard.py --check",
         "git diff main...HEAD",
         "git log --oneline main..HEAD",
         "gh pr view 3",
@@ -34,6 +35,7 @@ def test_checks_are_allowed(command: str) -> None:
         "uv run --frozen ruff format",
         "uv run --frozen pytest -o cache_dir=src",
         "python3 .claude/hooks/content_guard.py --hash-term x",
+        "python3 .claude/hooks/docs_guard.py",  # hook mode reads stdin; --check only
         "git diff > out.txt",
         "git log; rm -rf src",
         "git diff $(echo main)",

@@ -45,7 +45,8 @@ count or result must match the code or a generated file:
 - Eval numbers in the README ↔ the committed `reports/eval_<model>.md`, with the model
   and date. A typed number with no source is a blocker. The reports themselves are
   regenerated offline in CI; a README number that differs from them is a blocker.
-- Hooks, skills and agents listed in `CLAUDE.md` ↔ `.claude/`.
+- Hooks, skills and agents listed in `CLAUDE.md` ↔ `.claude/`, build-step state and pinned
+  versions: run `python3 .claude/hooks/docs_guard.py --check` first; it covers these.
 - Repo layout in brief §5 ↔ `git ls-files`.
 
 ### 2. Honesty and tone (brief §1, §11; ob-voice)
