@@ -28,12 +28,15 @@ import shlex
 import sys
 from pathlib import Path
 
+# Same heredoc rule as the content guard: the body is dropped, the rest of the marker
+# line (`<<'EOF' | git push ...`) is kept and checked.
+from content_guard import HEREDOC
+
 # Keep in sync with .env.example.
 SECRET_VARS = ("ANTHROPIC_API_KEY", "SLACK_WEBHOOK_URL")
 SECRET_EXPANSION = re.compile(rf"\$\{{?({'|'.join(SECRET_VARS)})\b")
 # `.env`, `.env.local`, `path/.env`; never `.env.example`.
 ENV_FILE = re.compile(r"(^|/)\.env(\.(?!example$)[\w.-]+)?$")
-HEREDOC = re.compile(r"""(<<-?\s*(['"]?)(\w+)\2)[^\n]*\n.*?^\t*\3$""", re.DOTALL | re.MULTILINE)
 OPERATORS = {"&&", "||", ";", "|", "&", "|&", ";;", "(", ")"}
 # git options that take a value as the next word, before the subcommand.
 GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path"}
@@ -48,7 +51,7 @@ def segments(command: str) -> list[list[str]]:
     >>> segments("git add -A && git commit -m 'a; b' | cat")
     [['git', 'add', '-A'], ['git', 'commit', '-m', 'a; b'], ['cat']]
     """
-    text = HEREDOC.sub(r"\1", command).replace("\n", " ; ")
+    text = HEREDOC.sub(r"\1\4", command).replace("\n", " ; ")
     lexer = shlex.shlex(text, posix=True, punctuation_chars=";&|()")
     lexer.whitespace_split = True
     result: list[list[str]] = [[]]

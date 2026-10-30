@@ -59,6 +59,7 @@ def repo(tmp_path: Path) -> Path:
         "gh repo delete jessicafalcon/nuance --yes",
         "gh pr merge 3 --squash --admin",
         "git commit -m 'unbalanced",
+        "cat <<'EOF' | git push --force origin feat/x\nbody\nEOF",
     ],
 )
 def test_blocked(command: str, repo: Path) -> None:
