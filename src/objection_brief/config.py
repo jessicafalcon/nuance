@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Final
 
 __all__ = [
@@ -12,11 +13,14 @@ __all__ = [
     "detect_max_tokens",
     "detect_model",
     "detect_prompt_version",
+    "llm_cache_dir",
     "load_settings",
     "max_retries",
     "max_transcript_bytes",
     "min_confidence",
     "request_timeout_s",
+    "themes_file",
+    "transcripts_dir",
 ]
 
 # The guardrail rejects a detection the model scores below this (brief §7.2).
@@ -35,6 +39,12 @@ detect_max_tokens: Final = 16000
 # Per-call limits on the model client, so a hung or failing call can't stall a run.
 request_timeout_s: Final = 60.0
 max_retries: Final = 2
+
+# Relative to the repository root, where the commands run (brief §8). Answers are
+# recorded only for transcripts under `transcripts_dir` (brief §7.6).
+themes_file: Final = Path("data/weaknesses.yaml")
+transcripts_dir: Final = Path("data/transcripts")
+llm_cache_dir: Final = Path("data/llm_cache")
 
 # A transcript larger than this is refused before it reaches a prompt (ob-security).
 max_transcript_bytes: Final = 200_000

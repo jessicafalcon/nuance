@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import json
 import os
@@ -19,6 +20,7 @@ __all__ = [
     "Cache",
     "CacheEntryError",
     "CacheMissError",
+    "LLMError",
     "ModelCall",
     "ModelCallError",
     "ModelResult",
@@ -31,15 +33,19 @@ __all__ = [
 type JSON = dict[str, Any]
 
 
-class CacheMissError(Exception):
+class LLMError(Exception):
+    """Any failure to get an answer, live or recorded; callers catch this one type."""
+
+
+class CacheMissError(LLMError):
     """An offline run asked for an answer that was never recorded."""
 
 
-class CacheEntryError(Exception):
+class CacheEntryError(LLMError):
     """A recorded answer can't be read; the message names the file."""
 
 
-class ModelCallError(Exception):
+class ModelCallError(LLMError):
     """A live call failed, or could not be made."""
 
 
@@ -139,14 +145,9 @@ def call_model(
     if path.exists():
         return _replay(path)
     if cache.offline:
-        raise CacheMissError(
-            f"no recorded answer for key {key} (prompt {prompt_version}); "
-            "run once without --offline to record it"
-        )
+        raise CacheMissError(f"no recorded answer for key {key} (prompt {prompt_version})")
     if not api_key:
-        raise ModelCallError(
-            "ANTHROPIC_API_KEY is not set; run with `uv run --env-file .env objection-brief ...`"
-        )
+        raise ModelCallError("ANTHROPIC_API_KEY is not set")
     output, stop_reason, usage = _send(request, api_key)
     result = ModelResult(output, stop_reason, usage, recorded_at=cache.now(), replayed=False)
     if cache.record:
@@ -183,10 +184,7 @@ def _write(path: Path, prompt_version: str, request: JSON, result: ModelResult) 
         "request": request,
         "output": result.output,
         "stop_reason": result.stop_reason,
-        "usage": {
-            "input_tokens": result.usage.input_tokens,
-            "output_tokens": result.usage.output_tokens,
-        },
+        "usage": dataclasses.asdict(result.usage),
         "recorded_at": result.recorded_at,
     }
     path.parent.mkdir(parents=True, exist_ok=True)

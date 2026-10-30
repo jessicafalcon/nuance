@@ -45,15 +45,21 @@ def test_missing_file_is_refused(repo: Path, capsys: pytest.CaptureFixture[str])
     assert "not a .txt file" in capsys.readouterr().err
 
 
-def test_offline_miss_is_reported_with_the_transcript_id(
-    repo: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+@pytest.fixture
+def t01(repo: Path) -> Path:
+    """t01 copied into the temporary repository, where nothing is recorded for it."""
     path = repo / "data" / "transcripts" / "t01_permissions.txt"
     shutil.copy(REPO / "data" / "transcripts" / path.name, path)
-    assert main(["run", str(path), "--offline"]) == 1
+    return path
+
+
+def test_offline_miss_is_reported_with_the_transcript_id(
+    t01: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["run", str(t01), "--offline"]) == 1
     err = capsys.readouterr().err
     assert err.startswith("t01_permissions: no recorded answer for key ")
-    assert f"(prompt {config.detect_prompt_version})" in err
+    assert f"(prompt {config.detect_prompt_version}); run once without --offline" in err
 
 
 @pytest.mark.parametrize(
@@ -77,9 +83,7 @@ def test_recorded_answers_replay_offline_without_writing(
 
 
 def test_live_run_without_a_key_says_how_to_load_it(
-    repo: Path, capsys: pytest.CaptureFixture[str]
+    t01: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    path = repo / "data" / "transcripts" / "t01_permissions.txt"
-    shutil.copy(REPO / "data" / "transcripts" / path.name, path)
-    assert main(["run", str(path)]) == 1
-    assert "--env-file .env" in capsys.readouterr().err
+    assert main(["run", str(t01)]) == 1
+    assert "ANTHROPIC_API_KEY is not set; a live call loads the key with" in capsys.readouterr().err

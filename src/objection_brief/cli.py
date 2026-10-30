@@ -18,14 +18,14 @@ from objection_brief.weaknesses import WeaknessesError, load_themes
 
 __all__ = ["main"]
 
-# Paths are relative to the repository root, where the commands run (brief §8).
-DATA = Path("data")
-THEMES_FILE = DATA / "weaknesses.yaml"
-TRANSCRIPTS = DATA / "transcripts"
-LLM_CACHE = DATA / "llm_cache"
-
 # The transcript id names output files from step 6 on, so it is checked here (ob-security).
 _TRANSCRIPT_ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
+
+# What to do next, by error; the library errors state only what went wrong.
+_HINTS: dict[type[Exception], str] = {
+    llm.CacheMissError: "; run once without --offline to record it",
+    llm.ModelCallError: "; a live call loads the key with `uv run --env-file .env objection-brief`",
+}
 
 
 class _InputError(Exception):
@@ -48,14 +48,14 @@ def main(argv: Sequence[str] | None = None) -> int:
 def _run(path: Path, *, offline: bool) -> int:
     try:
         transcript = _read_transcript(path)
-        themes = load_themes(THEMES_FILE)
+        themes = load_themes(config.themes_file)
     except (_InputError, WeaknessesError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
     cache = llm.Cache(
-        directory=LLM_CACHE,
+        directory=config.llm_cache_dir,
         offline=offline,
-        record=llm.may_record(path, TRANSCRIPTS),
+        record=llm.may_record(path, config.transcripts_dir),
         now=_utc_now,
     )
     call = functools.partial(
@@ -63,8 +63,8 @@ def _run(path: Path, *, offline: bool) -> int:
     )
     try:
         result = detect(transcript, themes, call=call, model=config.detect_model)
-    except (llm.CacheMissError, llm.CacheEntryError, llm.ModelCallError, DetectError) as error:
-        print(f"{path.stem}: {error}", file=sys.stderr)
+    except (llm.LLMError, DetectError) as error:
+        print(f"{path.stem}: {error}{_HINTS.get(type(error), '')}", file=sys.stderr)
         return 1
 
     answer = result.answer
@@ -85,7 +85,7 @@ def _run(path: Path, *, offline: bool) -> int:
         {RejectReason.MALFORMED_DETECTION: len(result.malformed)}
     )
     kept = sum(v.kept for v in verdicts)
-    counts = ", ".join(f"{reason} {n}" for reason, n in sorted(rejections.items()) if n)
+    counts = ", ".join(f"{reason} {n}" for reason, n in sorted(rejections.items()))
     print(f"{kept} kept, {rejections.total()} rejected" + (f" ({counts})" if counts else ""))
     return 0
 

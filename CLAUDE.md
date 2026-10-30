@@ -201,6 +201,8 @@ touched, commands run and results, records updated, open risks, next step.
   - Step 6: the t01 answer names `access_permissions` twice despite the "at most once"
     rule, the second a lead-in kept at exactly 0.6. Either the brief shows one item per
     theme (highest confidence) or the prompt changes, which re-records the entries.
+  - Step 6: `cli` adds malformed items to `guardrail.count_rejections` by hand; with
+    `run-all` and the log, one function should count every rejection, malformed included.
   - Tightening `excel_interop.detect_when`'s second clause, deferred until recorded
     model answers exist (step 5 or 7).
   - Step 7: `yaml.safe_load` keeps the last of two equal keys, so a duplicated stem in
