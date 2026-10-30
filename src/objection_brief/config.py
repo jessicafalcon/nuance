@@ -1,4 +1,4 @@
-"""Pipeline settings: thresholds, model IDs and price constants, in one place."""
+"""Pipeline settings in one place, starting with the guardrail's confidence threshold."""
 
 from __future__ import annotations
 

@@ -10,10 +10,11 @@ import pytest
 from objection_brief import config
 from objection_brief.detect import Detection, Speaker
 from objection_brief.guardrail import RejectReason, Verdict, check, count_rejections
-from objection_brief.weaknesses import load_themes
+from objection_brief.weaknesses import Theme, load_themes
 
 DATA = Path(__file__).parents[1] / "data"
 THEMES = load_themes(DATA / "weaknesses.yaml")
+T11 = (DATA / "transcripts" / "t11_rep_raised_objection.txt").read_text("utf-8")
 TRANSCRIPT = (
     "REP: How do you handle access today?\n"
     "\n"
@@ -35,15 +36,19 @@ def _detection(
     return Detection(theme_id=theme_id, quote=quote, speaker=speaker, confidence=confidence)
 
 
-def _reason(detection: Detection, transcript: str = TRANSCRIPT) -> RejectReason | None:
-    (verdict,) = check([detection], transcript, THEMES)
+def _reason(
+    detection: Detection,
+    transcript: str = TRANSCRIPT,
+    themes: tuple[Theme, ...] = THEMES,
+    **threshold: float,
+) -> RejectReason | None:
+    (verdict,) = check([detection], transcript, themes, **threshold)
     return verdict.reject_reason
 
 
 def test_exact_prospect_quote_is_kept() -> None:
     (verdict,) = check([_detection()], TRANSCRIPT, THEMES)
     assert verdict.kept
-    assert verdict.reject_reason is None
 
 
 @pytest.mark.parametrize(
@@ -84,38 +89,35 @@ def test_speaker_other_than_prospect_is_rejected(speaker: Speaker) -> None:
     assert _reason(_detection(speaker=speaker)) is RejectReason.SPEAKER_NOT_PROSPECT
 
 
-def test_rep_words_labelled_as_prospect_are_rejected() -> None:
-    quote = "every time you change who sees what"
-    assert _reason(_detection(quote=quote)) is RejectReason.QUOTE_NOT_PROSPECT
-
-
-def test_rep_raised_objection_in_t11_is_rejected_when_labelled_prospect() -> None:
-    # t11's rep reads out the themes' signals and the prospect dismisses each one; a
-    # model that misattributes the rep's line must not produce a brief.
-    transcript = (DATA / "transcripts" / "t11_rep_raised_objection.txt").read_text("utf-8")
-    quote = "setting up permissions for every budget owner is painful"
+@pytest.mark.parametrize(
+    ("quote", "transcript"),
+    [
+        pytest.param("every time you change who sees what", TRANSCRIPT, id="rep-line"),
+        # t11's rep reads out the themes' signals and the prospect dismisses each one;
+        # a model that misattributes the rep's line must not produce a brief.
+        pytest.param("setting up permissions for every budget owner is painful", T11, id="t11"),
+        pytest.param("who sees what? prospect: probably.", TRANSCRIPT, id="spans-two-turns"),
+        pytest.param(
+            "setting up permissions for every budget owner",
+            "REP: Setting up permissions for every budget owner sounds painful.\n",
+            id="no-prospect-lines",
+        ),
+    ],
+)
+def test_quote_outside_a_single_prospect_turn_is_rejected(quote: str, transcript: str) -> None:
     assert _reason(_detection(quote=quote), transcript) is RejectReason.QUOTE_NOT_PROSPECT
-
-
-def test_quote_spanning_two_turns_is_rejected() -> None:
-    quote = "who sees what? prospect: probably."
-    assert _reason(_detection(quote=quote)) is RejectReason.QUOTE_NOT_PROSPECT
-
-
-def test_transcript_without_prospect_lines_keeps_nothing() -> None:
-    transcript = "REP: Setting up permissions for every budget owner sounds painful.\n"
-    assert _reason(_detection(), transcript) is RejectReason.QUOTE_NOT_PROSPECT
 
 
 def test_confidence_threshold_comes_from_config() -> None:
     assert config.min_confidence == 0.6
-    assert _reason(_detection(confidence=0.6)) is None
-    assert _reason(_detection(confidence=0.59)) is RejectReason.LOW_CONFIDENCE
+    below = math.nextafter(config.min_confidence, 0.0)
+    assert _reason(_detection(confidence=config.min_confidence)) is None
+    assert _reason(_detection(confidence=below)) is RejectReason.LOW_CONFIDENCE
 
 
 def test_threshold_can_be_overridden() -> None:
-    (verdict,) = check([_detection(confidence=0.7)], TRANSCRIPT, THEMES, min_confidence=0.8)
-    assert verdict.reject_reason is RejectReason.LOW_CONFIDENCE
+    detection = _detection(confidence=0.7)
+    assert _reason(detection, min_confidence=0.8) is RejectReason.LOW_CONFIDENCE
 
 
 @pytest.mark.parametrize("confidence", [-0.1, 1.01, math.nan, math.inf])
@@ -123,14 +125,20 @@ def test_confidence_outside_zero_to_one_is_rejected(confidence: float) -> None:
     assert _reason(_detection(confidence=confidence)) is RejectReason.INVALID_CONFIDENCE
 
 
-def test_unknown_theme_is_rejected() -> None:
-    assert _reason(_detection(theme_id="onboarding_speed")) is RejectReason.UNKNOWN_THEME
-
-
-def test_theme_removed_from_the_file_is_rejected() -> None:
-    themes = tuple(t for t in THEMES if t.id != "access_permissions")
-    (verdict,) = check([_detection()], TRANSCRIPT, themes)
-    assert verdict.reject_reason is RejectReason.UNKNOWN_THEME
+@pytest.mark.parametrize(
+    ("theme_id", "themes"),
+    [
+        pytest.param("onboarding_speed", THEMES, id="not-a-theme"),
+        pytest.param(
+            "access_permissions",
+            tuple(t for t in THEMES if t.id != "access_permissions"),
+            id="removed-from-the-file",
+        ),
+    ],
+)
+def test_unknown_theme_is_rejected(theme_id: str, themes: tuple[Theme, ...]) -> None:
+    detection = _detection(theme_id=theme_id)
+    assert _reason(detection, themes=themes) is RejectReason.UNKNOWN_THEME
 
 
 def test_first_failing_check_names_the_reason() -> None:
