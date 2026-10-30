@@ -102,7 +102,7 @@ def rows(
 
 
 def append(path: Path, new_rows: Sequence[Row]) -> None:
-    """Create the table if needed and append the rows in one statement.
+    """Create the table if needed and append the rows in one transaction, all or none.
 
     Raises:
         LogError: the database can't be opened or written, for example while another
@@ -113,6 +113,8 @@ def append(path: Path, new_rows: Sequence[Row]) -> None:
         with duckdb.connect(str(path)) as db:
             db.execute(_DDL)
             if new_rows:
+                db.begin()
                 db.executemany(_INSERT, [dataclasses.astuple(row) for row in new_rows])
+                db.commit()
     except (OSError, duckdb.Error) as error:
         raise LogError(f"{path}: could not append detections ({error})") from error

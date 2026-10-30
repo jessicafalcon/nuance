@@ -96,3 +96,19 @@ def test_a_webhook_url_that_is_not_slacks_is_refused_before_posting(
         notify(MESSAGE, "t01", webhook_url=other, out_dir=tmp_path)
     assert sent == []
     check_webhook(WEBHOOK)
+
+
+def test_send_posts_json_with_a_timeout_and_no_redirects(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Brief §7.4: the brief goes to Slack's host only, never where a redirect points.
+    seen: dict[str, Any] = {}
+
+    class Response:
+        status_code = 200
+
+    def fake_post(url: str, **kwargs: Any) -> Response:
+        seen.update(url=url, **kwargs)
+        return Response()
+
+    monkeypatch.setattr(requests, "post", fake_post)
+    assert notify_module._send(WEBHOOK, MESSAGE) == 200  # pyright: ignore[reportPrivateUsage]
+    assert seen == {"url": WEBHOOK, "json": MESSAGE, "timeout": 60.0, "allow_redirects": False}

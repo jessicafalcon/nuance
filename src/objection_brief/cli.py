@@ -135,9 +135,14 @@ def _process(
     except (log.LogError, llm.LLMError, notify.NotifyError) as error:
         return _fail(stem, error)
     withheld = sum(entry.follow_up.problem is not None for entry in entries)
+    tokens = (
+        sum(e.follow_up.usage.input_tokens for e in entries),
+        sum(e.follow_up.usage.output_tokens for e in entries),
+    )
     print(
-        f"  brief {'posted to Slack' if where is None else f'written to {where}'}"
-        + (f", {withheld} follow-up draft(s) withheld" if withheld else "")
+        f"  brief {'posted to Slack' if where is None else f'written to {where}'}, "
+        f"{len(entries)} follow-up call(s), {tokens[0]} input and {tokens[1]} output tokens"
+        + (f", {withheld} draft(s) withheld" if withheld else "")
     )
     print(brief.preview(message))
     return _OK

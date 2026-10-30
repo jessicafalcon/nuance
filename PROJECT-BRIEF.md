@@ -217,7 +217,7 @@ Every model call goes through `llm.call_model()`, which reads and writes a respo
 ## 8. CLI
 
 ```
-uv run objection-brief run data/transcripts/t01_permissions.txt   # detect → guardrail → brief → notify → log
+uv run objection-brief run data/transcripts/t01_permissions.txt   # detect → guardrail → log → brief → notify
 uv run objection-brief run-all                                     # every transcript
 uv run objection-brief eval --model claude-haiku-5-5               # metrics vs labels.yaml
 uv run objection-brief eval --model claude-sonnet-5-5

@@ -181,7 +181,7 @@ def test_message_has_the_five_elements_per_theme_and_the_draft_footer() -> None:
     assert f"*Follow-up draft, edit before sending:*\n{DRAFT}" in texts
     assert message["blocks"][-1] == {
         "type": "context",
-        "elements": [{"type": "mrkdwn", "text": FOOTER}],
+        "elements": [{"type": "mrkdwn", "text": FOOTER, "verbatim": True}],
     }
     assert FOOTER == "Draft answer \N{EM DASH} review before using."
     assert message["unfurl_links"] is False
@@ -248,3 +248,19 @@ def test_a_cut_never_leaves_half_an_escape() -> None:
     texts = _texts(build_message("t01", [_item(quote=quote)]))
     said = next(t for t in texts if t.startswith("*Prospect said:*"))
     assert said.removesuffix("\N{HORIZONTAL ELLIPSIS}").endswith(("x", "&amp;"))
+
+
+def test_the_model_draft_is_escaped_like_the_quote() -> None:
+    draft = FollowUp("Ping <!channel> and see <https://evil.example|our page>.", None, Usage(1, 1))
+    dumped = json.dumps(build_message("t01", [_item(follow_up=draft)]))
+    assert "<!channel>" not in dumped
+    assert "<https://" not in dumped
+    assert "&lt;!channel&gt;" in dumped
+
+
+def test_every_mrkdwn_text_is_verbatim_so_slack_parses_no_bare_mention() -> None:
+    message = build_message("t01", [_item(quote="@here look at this")])
+    mrkdwn = [b["text"] for b in message["blocks"] if b["type"] == "section"]
+    mrkdwn += [e for b in message["blocks"] if b["type"] == "context" for e in b["elements"]]
+    assert mrkdwn
+    assert all(text["verbatim"] is True for text in mrkdwn)

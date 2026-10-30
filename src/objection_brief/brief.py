@@ -79,6 +79,8 @@ no greeting, sign-off or subject line.
 - Acknowledge the concern in the quote, then give the answer, the proof and the next step.
 - Add no fact, figure, date, name, customer, feature or promise that is not in the \
 approved points or the quote.
+- Write every number exactly as the approved points or the quote write it, in words \
+or in digits.
 - Copy the proof as written. If it contains [PLACEHOLDER], keep that marker and the \
 words after it unchanged, so the account executive sees it must be replaced."""
 
@@ -214,7 +216,11 @@ def build_message(transcript_id: str, entries: Sequence[BriefItem]) -> JSON:
             _section(f"*Follow-up draft, edit before sending:*\n{draft}"),
             {"type": "divider"},
         ]
-    blocks.append({"type": "context", "elements": [{"type": "mrkdwn", "text": FOOTER}]})
+    # Six blocks per theme plus two stays under Slack's 50 blocks for up to eight themes;
+    # the theme file has six.
+    blocks.append(
+        {"type": "context", "elements": [{"type": "mrkdwn", "text": FOOTER, "verbatim": True}]}
+    )
     labels = ", ".join(escape(item.theme.label) for item in entries)
     return {
         "text": _fit(f"Objection brief for {transcript_id}: {labels}", _TEXT_LIMIT),
@@ -247,7 +253,12 @@ def preview(message: JSON) -> str:
 
 
 def _section(text: str) -> JSON:
-    return {"type": "section", "text": {"type": "mrkdwn", "text": _fit(text, _TEXT_LIMIT)}}
+    # `verbatim` turns off Slack's own parsing, so a bare @here or a URL in a quote
+    # stays text; `escape` already rules out the <...> forms.
+    return {
+        "type": "section",
+        "text": {"type": "mrkdwn", "text": _fit(text, _TEXT_LIMIT), "verbatim": True},
+    }
 
 
 def _fit(text: str, limit: int) -> str:

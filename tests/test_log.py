@@ -65,7 +65,6 @@ def test_kept_rejected_and_malformed_detections_land_with_their_columns(tmp_path
         ("created_at", "TIMESTAMP"),
     ]
     # Stored as UTC without a zone, as a TIMESTAMP holds it.
-    # Stored as UTC without a zone, as a TIMESTAMP holds it.
     utc_noon = datetime(2026, 10, 30, 12, 0, tzinfo=UTC).replace(tzinfo=None)
     head, usage = ("run-1", "t01_permissions"), ("claude-haiku-5-5", 2572, 134)
     assert got == [

@@ -10,7 +10,7 @@ from typing import Any
 import duckdb
 import pytest
 
-from objection_brief import config, llm
+from objection_brief import config, llm, notify
 from objection_brief.brief import FOOTER
 from objection_brief.cli import main
 from objection_brief.llm import Usage
@@ -223,6 +223,36 @@ def test_a_webhook_that_is_not_slacks_is_refused_before_any_call(
     assert "SLACK_WEBHOOK_URL must start with https://hooks.slack.com/" in err
     assert "collector.example" not in err
     assert live == []
+
+
+def test_a_webhook_run_posts_and_reports_withheld_drafts_and_tokens(
+    t01: Path,
+    live: list[dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    posted: list[Any] = []
+    monkeypatch.setattr(notify, "_send", lambda url, message: posted.append(message) or 200)
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hooks.slack.com/" + "services/" + "x" * 24)
+    # A follow-up that states a figure nobody gave is withheld, and the run says so.
+    invented = FOLLOW_UP + " Teams save 40% of setup time."
+    send = llm._send  # pyright: ignore[reportPrivateUsage]
+
+    def fake_send(request: dict[str, Any], api_key: str) -> tuple[str, str | None, Usage]:
+        output, stop, usage = send(request, api_key)
+        return (output if "format" in request["output_config"] else invented), stop, usage
+
+    monkeypatch.setattr(llm, "_send", fake_send)
+
+    assert main(["run", str(t01)]) == 0
+    out = capsys.readouterr().out
+    assert (
+        "brief posted to Slack, 1 follow-up call(s), 80 input and 60 output tokens, "
+        "1 draft(s) withheld"
+    ) in out
+    assert len(posted) == 1
+    assert invented not in json.dumps(posted[0])
+    assert not (t01.parents[2] / config.briefs_dir).exists()
 
 
 def test_run_outside_the_repository_root_is_refused(
