@@ -1,0 +1,21 @@
+# Local-only Claude Code files
+.claude/settings.local.json
+
+# OS
+.DS_Store
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+
+# Secrets: only the template is committed
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Run outputs: briefs, the DuckDB file
+out/

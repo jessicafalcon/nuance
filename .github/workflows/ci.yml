@@ -1,0 +1,111 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    # `edited`: a changed PR title or body is checked again by the `content` job.
+    types: [opened, synchronize, reopened, edited]
+
+# Read-only token and no secrets: an accidental live call to the Anthropic API or Slack
+# fails for lack of credentials, and pytest blocks sockets on top of that.
+permissions: {}
+
+# A newer push to a PR supersedes its older run; every commit on main finishes its run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Installs the uv version pinned by `required-version` in pyproject.toml.
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml', '.python-version') }}
+
+      # Fails on a stale uv.lock, so the uv-lock hook is skipped below. The hooks then
+      # run with `--frozen` against this environment.
+      - run: uv sync --locked
+
+      # Staged-only gitleaks has nothing to scan here; the `secrets` job covers history.
+      - run: uv run --frozen pre-commit run --all-files --show-diff-on-failure
+        env:
+          SKIP: uv-lock,gitleaks-system
+      - run: uv run --frozen pytest
+
+  secrets:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # full history: a secret removed in a later commit is still public
+          persist-credentials: false
+
+      - name: Install gitleaks
+        env:
+          # Keep in sync with the gitleaks rev in .pre-commit-config.yaml.
+          VERSION: 8.30.1
+          SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          curl -sSfL --retry 3 --connect-timeout 10 --max-time 120 -o "$RUNNER_TEMP/gitleaks.tgz" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz"
+          echo "${SHA256}  $RUNNER_TEMP/gitleaks.tgz" | sha256sum --check -
+          tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP" gitleaks
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+
+      - name: Scan full history for secrets
+        run: gitleaks git --redact --verbose .
+
+  # Secrets and banned terms in what the public reads besides files: every commit message
+  # and diff in the history (including a squash message edited on GitHub), and the PR
+  # title and body. Those arrive through `env:`, never interpolated into the script.
+  content:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan every commit message and diff
+        run: python3 .claude/hooks/content_guard.py --history
+      - name: Scan the PR title and body
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s\n' "$PR_TITLE" > "$RUNNER_TEMP/pr_title.txt"
+          printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr_body.txt"
+          python3 .claude/hooks/content_guard.py "$RUNNER_TEMP/pr_title.txt" "$RUNNER_TEMP/pr_body.txt"
+
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      # Every locked package, dev group included, against the OSV vulnerability database.
+      - name: Audit locked dependencies
+        run: uv audit --locked
