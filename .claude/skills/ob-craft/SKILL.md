@@ -39,8 +39,7 @@ Stop at the first rung that holds:
 1. **Does it need to exist?** Out of the brief's scope → skip it, note it in the README.
 2. **Already in the repo?** Reuse the dataclass, loader or helper that's here.
 3. **Standard library?** `dataclasses`, `enum`, `pathlib`, `json`, `argparse`, `re`, `unicodedata`.
-4. **A listed dependency** (brief §4): `anthropic`, `pyyaml`, `duckdb`, `requests`.
-   Anything else: ask first (brief §14).
+4. **A dependency brief §4 lists.** Anything else: ask first (brief §14).
 5. **Only then** write the minimum that works.
 
 No abstraction with one implementation, no class where a function does, no config for
@@ -72,12 +71,10 @@ a value that never changes, no `utils.py`.
 - One function, `llm.call_model(*, model, prompt_version, system, messages, tools,
   tool_choice, max_tokens, temperature, cache: Cache) -> ModelResult`, returns the
   parsed tool input, token usage, `recorded_at` and whether it was replayed.
-- **Replay first** (brief §7.6): the key is `sha256` of canonical JSON
-  (`json.dumps(..., sort_keys=True, separators=(",", ":"))`) of model, prompt version,
-  system, messages, tools, `tool_choice`, `max_tokens` and `temperature`; never `cache`.
-  `Cache` is a small frozen dataclass: directory, `offline`, `record`. `cli.py` builds
-  it (`--offline`; `record` only for a transcript whose resolved path is under
-  `data/transcripts/`).
+- **Replay first** (brief §7.6 lists the key's inputs): canonical JSON is
+  `json.dumps(..., sort_keys=True, separators=(",", ":"))`, and `cache` is never part of
+  the key. `Cache` is a small frozen dataclass: directory, `offline`, `record`.
+  `cli.py` builds it from `--offline` and the recording rule in §7.6.
 - **How it reaches callers:** `detect` and `brief` take a `call: ModelCall` parameter,
   a `Protocol` in `llm.py` with `call_model`'s keywords minus `cache`. `cli.py` passes
   `functools.partial(llm.call_model, cache=cache)`; tests pass a fake with the same
@@ -102,8 +99,8 @@ a value that never changes, no `utils.py`.
   Python 3.12 (`.python-version`).
 - **ruff** format + lint (with bandit `S` rules), fixed on every edit by the hook.
 - **pyright** strict on `src/`.
-- **pre-commit**: hygiene, uv-lock, gitleaks, zizmor, ruff, pyright, boundary and content
-  guards at commit; pytest, full-history gitleaks and `uv audit` at push.
+- **pre-commit**: the commit and push checks in `.pre-commit-config.yaml`; ob-security
+  lists what each layer catches.
 
 Let hooks do the mechanical enforcement. Spend attention on the logic and the test
 that proves it.
