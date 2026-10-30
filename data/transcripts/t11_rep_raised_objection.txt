@@ -1,0 +1,55 @@
+REP: Hi Joanna, thanks for joining. I know you're covering for your controller this week.
+
+PROSPECT: I am, so this is a welcome break from approving invoices.
+
+REP: I'll keep it useful, then. Last time we covered the basics of how Oakhurst Veterinary plans today. I'd like to use today to go through the concerns we usually hear from finance teams, so nothing comes up late.
+
+PROSPECT: That sounds sensible. Go ahead.
+
+REP: A concern we hear a lot is that setting up permissions for every budget owner is painful, and that teams need vendor help every time they change who sees what. Is that on your mind?
+
+PROSPECT: Not really. We have six practices and one entity, and each practice manager can see the whole business anyway. We're very open with the numbers.
+
+REP: That's simpler than most. Another one we hear is that department heads aren't spreadsheet people and struggle to use planning tools without a consultant.
+
+PROSPECT: Our practice managers are actually quite comfortable with numbers. Most of them ran their own practices before joining us.
+
+REP: That helps. Some teams also tell us they still end up exporting everything to Excel for the board pack.
+
+PROSPECT: We're happy to keep the board slides in Excel. They're short, and our chair likes them the way they are.
+
+REP: Fair enough. And the last one: some finance teams worry the model gets slow once it grows, with lots of products or entities.
+
+PROSPECT: Our model is small. Six practices, about forty cost lines each, and a monthly forecast. I'd be surprised if size were an issue.
+
+REP: I'd agree, at that size. So, it sounds like none of those are a concern for you.
+
+PROSPECT: Not at this stage. What I care about is getting off the spreadsheet before we open the seventh practice.
+
+REP: When is that planned?
+
+PROSPECT: Spring next year. We'd like the new practice planned in the tool from day one.
+
+REP: That gives us enough time. A business your size usually goes live in six to eight weeks.
+
+PROSPECT: Good. What would you need from us to start?
+
+REP: The chart of accounts, last year's actuals by practice, and the current budget workbook so we can see how you structure it.
+
+PROSPECT: I can get those to you once my controller is back. She's the one who knows where everything is.
+
+REP: Of course. When is she back?
+
+PROSPECT: Monday. I'll ask her to send them next week.
+
+REP: Perfect. I'll also send a short implementation plan so you can see the weeks laid out.
+
+PROSPECT: That would help me explain it to our managing director.
+
+REP: I'll include a one-page summary for that. Anything else for today?
+
+PROSPECT: No, I think we're in good shape. Thanks for going through the list, it's useful to know what other teams worry about.
+
+REP: Thanks, Joanna. Enjoy the invoices.
+
+PROSPECT: I'll try.

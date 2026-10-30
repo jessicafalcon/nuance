@@ -1,0 +1,63 @@
+REP: Hi Oskar, thanks for joining. Is Lena joining us too?
+
+PROSPECT: She'll be a few minutes late. Let's start without her.
+
+REP: Sure. Last time you gave me the shape of the demand plan at Tamsin Foods. Can I play it back to check I have it right?
+
+PROSPECT: Go ahead.
+
+REP: About six thousand active SKUs, thirty-two distribution points, a weekly forecast for the next eighteen months, and three years of history that the planners use for seasonality.
+
+PROSPECT: That's right. Plus three versions at any time: the budget, the latest forecast, and one scenario. Usually a promotion scenario.
+
+REP: And today that's split across several spreadsheets.
+
+PROSPECT: Eleven workbooks, linked to each other. It's fragile, which is why we're looking.
+
+REP: Understood. The demo used a much smaller dataset, so I'd like to hear what you'd need to see from a model your size.
+
+PROSPECT: That's my main concern, actually. We've been burned before.
+
+REP: How so?
+
+PROSPECT: We have about six thousand SKUs across thirty-two distribution points, and the last tool we tried took four minutes to recalculate the forecast.
+
+REP: Four minutes for a full recalculation?
+
+PROSPECT: For any change. A planner would adjust a promotion uplift and then wait. It was a pilot, and it never went further.
+
+REP: That's a fair reason to be cautious. What did the planners do while they waited?
+
+PROSPECT: They went back to their workbooks. Which brings me to the point. If a recalculation takes minutes, my planners will just go back to their spreadsheets, and the project is dead.
+
+REP: I'd rather be straight with you about this. Very large models can slow down, on any platform, and how the model is designed matters as much as the platform. For example, whether every SKU needs to be planned at every distribution point weekly, or whether some can be planned monthly and spread down.
+
+PROSPECT: Some of them could be monthly. The long tail, probably two thirds of the SKUs.
+
+REP: That kind of decision makes a big difference. Implementation includes a model design review for exactly this reason, before anything is built. But I don't want you to take that on trust.
+
+PROSPECT: Good, because I won't.
+
+REP: What I'd propose is a performance test on an anonymized sample of your largest model. You send us the structure and a few months of data with the product names removed, we build it the way we'd recommend, and you see the recalculation times yourself before any commitment.
+
+PROSPECT: How long would that take?
+
+REP: Usually two to three weeks, depending on how quickly we can get the data.
+
+PROSPECT: And if the numbers are bad?
+
+REP: Then you'll know before signing anything, and so will we. We'd share the results either way.
+
+PROSPECT: Okay. Lena owns the data extracts, so she'd need to be involved. Here she is now.
+
+REP: Hi Lena. We were just discussing a performance test on a sample of the demand plan.
+
+PROSPECT: She says she can pull an extract by the end of next week, but she wants a list of exactly which fields you need.
+
+REP: I'll send a template today. It will list the dimensions, the history length and the versions we'd want to include.
+
+PROSPECT: Send it to both of us. And include the scenario version, because that's where the last tool really struggled.
+
+REP: Noted, the scenario version goes in the test. Thanks, both.
+
+PROSPECT: Thanks. We'll wait for the template.

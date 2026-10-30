@@ -1,0 +1,20 @@
+# Expected objection themes per synthetic transcript in data/transcripts/, keyed by file
+# stem. Theme ids are those in data/weaknesses.yaml; an empty list means no prospect
+# objection. The eval scores detections after the guardrail against this file
+# (PROJECT-BRIEF.md §6.3, §9).
+
+# Positives: each prospect objection counts once per theme.
+t01_permissions: [access_permissions]
+t02_learning_curve: [learning_curve_non_finance]
+t03_excel_board_pack: [excel_interop]
+t04_performance_scale: [performance_at_scale]
+t05_consolidation: [consolidation_depth]
+t06_pricing_renewal: [pricing_escalation]
+t07_learning_and_pricing: [learning_curve_non_finance, pricing_escalation]
+t08_consolidation_and_excel: [consolidation_depth, excel_interop]
+
+# Negatives.
+t09_price_positive: []           # price and renewal terms mentioned positively
+t10_competitor_mention: []       # a competitor named, no objection raised
+t11_rep_raised_objection: []     # the rep names four themes; the prospect dismisses each
+t12_no_objection: []             # implementation planning, no objection

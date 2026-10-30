@@ -1,0 +1,61 @@
+REP: Hi Tobias, thanks for joining. Is Mei with you today?
+
+PROSPECT: She is. She'll be leading the project on our side, so I wanted her here from the start.
+
+REP: Welcome, Mei. Today is mainly about planning the next steps, since the commercial side is agreed.
+
+PROSPECT: That's right. The contract went through our approval process yesterday.
+
+REP: Great news. Let's start with the timeline. Fernleigh Garden Centres would like the first budget in the tool for the next financial year, starting in April.
+
+PROSPECT: Yes. Which means the budget process starts in January, so we'd want to be live by mid-December.
+
+REP: That gives us about ten weeks, which is comfortable for twelve garden centres and a central office. Let me walk you through the phases.
+
+PROSPECT: Please.
+
+REP: The first two weeks are model design workshops. We'll agree the structure: centres, departments, the chart of accounts, and how the seasonal drivers work.
+
+PROSPECT: The seasonality is important. Half our revenue comes between March and June.
+
+REP: Noted. We'll make sure the phasing reflects that from the start. Weeks three to six are the build and the data load. Weeks seven and eight are testing with a few budget owners, and the last two weeks are training and go-live.
+
+PROSPECT: Mei wants to know which budget owners you'd want for testing.
+
+REP: Ideally two or three centre managers with different levels of experience, and someone from the central office.
+
+PROSPECT: She suggests the manager from our largest centre and one of the newer managers. And our head of buying.
+
+REP: That's a good mix. Who will be the admin once we're live?
+
+PROSPECT: Mei. She'll do the admin training as part of onboarding.
+
+REP: Perfect. Mei, the admin training is about two days, spread over the build phase, so you learn on your own model.
+
+PROSPECT: She says that suits her better than a classroom course.
+
+REP: Most admins prefer it. Now, data. What we'll need for the load is two years of monthly actuals by centre and account, the current headcount list, and this year's budget file.
+
+PROSPECT: The actuals come from our accounting system. Mei can export those as files.
+
+REP: Files are fine for the first load. We can set up a scheduled import later once the process settles.
+
+PROSPECT: That makes sense. Let's keep it simple to start with.
+
+REP: Agreed. On communication, I'd suggest a weekly thirty-minute check-in during the project, with Mei and our project lead, Sofia.
+
+PROSPECT: Weekly works. Tuesdays are best.
+
+REP: I'll set that up. And for decisions that need you, Tobias, we'll flag them in the weekly notes so nothing waits on a meeting.
+
+PROSPECT: Good. I'd rather approve things by email than join every call.
+
+REP: Understood. The last thing is the kick-off. Could we do it next Wednesday, in person at your central office?
+
+PROSPECT: Wednesday works. Mei will book a room.
+
+REP: Great. I'll send the agenda and the data request list by Friday.
+
+PROSPECT: Perfect. Thanks, this all sounds very organised.
+
+REP: Thank you both. See you on Wednesday.

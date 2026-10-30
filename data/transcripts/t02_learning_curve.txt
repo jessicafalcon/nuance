@@ -1,0 +1,59 @@
+REP: Hi Marcus, thanks for joining. I know you had the operations review this morning, so I'll keep us on time.
+
+PROSPECT: Appreciated. It ran long, as usual.
+
+REP: Last time you mentioned Larchmont Dental is opening four new clinics this year, and the budget process is getting harder to run from the finance team alone. Is that still the main driver?
+
+PROSPECT: It is. We're at twenty-three clinics now. Each clinic manager is supposed to own their staffing plan and their supply costs, but in practice my team does most of it for them.
+
+REP: Why does it end up with your team?
+
+PROSPECT: The template is complicated, and the managers are busy running clinics. They send us a few numbers in an email and we type them in.
+
+REP: So the goal is for the clinic managers to enter and own their numbers directly.
+
+PROSPECT: That's the goal. I'm just not sure it's realistic.
+
+REP: Tell me more.
+
+PROSPECT: My worry is that our clinic managers aren't spreadsheet people, and if they can't update their own staffing numbers this ends up back on my desk.
+
+REP: That's an important point, and it's better to raise it now than after a rollout. What do the managers find hardest today?
+
+PROSPECT: The template has formulas everywhere. If they type over one, the totals break, and they don't know how to fix it. A few of them have stopped trying.
+
+REP: Okay. The way we'd approach that is to separate two jobs. Building and changing the model is one job, and for that there is a learning curve. Entering and reviewing numbers is a different job, and that's what clinic managers would do. They'd get an input view with their clinic, a few fields for hygienist hours, chair days and supplies, and nothing they can break.
+
+PROSPECT: That part sounds fine. What worries me more is the model itself.
+
+REP: Go on.
+
+PROSPECT: Our last planning tool needed a consultant every time we wanted to add a new driver, and we stopped using it after a year.
+
+REP: That's a real pattern, and I'd want to avoid repeating it. What kind of drivers were you trying to add?
+
+PROSPECT: Simple things. When we added a new treatment type, we needed a driver for it. We had to wait three weeks and pay for a change request.
+
+REP: Understood. The approach here is that someone on your team becomes the trained admin. Onboarding includes admin training, and routine changes like adding a driver are meant to be handled by that person, not by us or a partner. I won't tell you it's effortless on day one, but it's designed so you aren't dependent on a consultant for routine changes.
+
+PROSPECT: Who on my team would that be, realistically?
+
+REP: Usually it's the analyst who maintains the current template today. Do you have someone like that?
+
+PROSPECT: Priya. She built most of what we have now.
+
+REP: Then she'd be the natural admin. Here's what I'd suggest to test this before you decide: a hands-on session where two of your clinic managers complete a real input task in a sandbox, without anyone from finance helping them. If they can't do it, you'll know early.
+
+PROSPECT: I like that. I'd pick one manager who's comfortable with numbers and one who isn't.
+
+REP: That's exactly the right mix. And separately, Priya could spend an hour with our team adding a driver herself, so she can judge the admin side.
+
+PROSPECT: That would answer most of my questions. When could we do it?
+
+REP: The sandbox can be ready next week. I'll send a few times and a one-page guide the managers can read beforehand, though the point is to see how they do without it.
+
+PROSPECT: Good. Send it to me and I'll pick the two managers.
+
+REP: Will do. Thanks, Marcus.
+
+PROSPECT: Thanks. Talk soon.

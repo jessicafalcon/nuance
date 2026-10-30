@@ -1,0 +1,55 @@
+REP: Hi Noor, thanks for joining. How has the week been?
+
+PROSPECT: Busy, but good. We finished the reforecast on Tuesday, so I have some breathing room.
+
+REP: Glad to hear it. Last time, you said Saltmarsh Media was early in the evaluation. Where are you now?
+
+PROSPECT: Further along. We've narrowed it to two options, and you're one of them.
+
+REP: Thanks for telling me. Can I ask who the other one is?
+
+PROSPECT: Sure, it's no secret. We also had a demo from Fabrikam last week, mostly to compare how each of you handles scenario planning.
+
+REP: That's a sensible comparison. What's driving the focus on scenarios?
+
+PROSPECT: Our revenue depends a lot on advertising, and that moves with the economy. The leadership team wants to see three scenarios every quarter: base, downside and a recovery case.
+
+REP: And today those scenarios are built how?
+
+PROSPECT: Copies of the forecast workbook. Three files, which we then try to keep in sync. It's manageable, but it eats a lot of time.
+
+REP: In our demo you saw versions, where each scenario is a copy of the plan with its own assumptions, and you can compare them side by side.
+
+PROSPECT: Yes, that looked good. Both demos covered the basics well, to be fair. Nothing put us off either of you.
+
+REP: That's fair. What would help you decide between the two?
+
+PROSPECT: Mainly how the scenario assumptions are set up. I'd like to see one of our real drivers, like ad revenue per campaign, change across all three scenarios at once.
+
+REP: That's a good test. We could do that in a working session with a sample of your drivers.
+
+PROSPECT: That would be helpful. I'm asking Fabrikam for the same thing, so it's a fair comparison.
+
+REP: That makes sense. Who else is involved in the decision?
+
+PROSPECT: Me, our CFO, and our head of commercial finance, Bilal. The CFO will make the final call, but she'll go with our recommendation.
+
+REP: And the timeline?
+
+PROSPECT: We'd like to decide by the end of next month, so we can implement before the budget cycle starts in the autumn.
+
+REP: That's achievable. Implementation for a business your size is typically eight to ten weeks.
+
+PROSPECT: That works. Bilal will want to know how the scenarios connect to the cash flow. Can you cover that too?
+
+REP: Yes. I'll make sure the cash flow view is part of the session. Could you send the drivers you'd like to see beforehand?
+
+PROSPECT: I'll send a short list, with the numbers changed.
+
+REP: Perfect. I'll propose a couple of times for next week.
+
+PROSPECT: Great. Thursday mornings are usually free for all three of us.
+
+REP: Then I'll aim for Thursday. Thanks, Noor.
+
+PROSPECT: Thanks. Talk next week.

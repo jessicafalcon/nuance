@@ -1,0 +1,53 @@
+REP: Thanks for joining, Ruth. I know month-end is close, so I appreciate it.
+
+PROSPECT: We're on day two of the close, so you have my attention for half an hour.
+
+REP: Understood. In our first call you described Aldermoor Industrial Group's structure, and I'd like to make sure we understand it properly before we go further.
+
+PROSPECT: Good, because it's the part that usually gets glossed over in these conversations.
+
+REP: Fourteen legal entities, operating in three currencies, with the group reporting in euros. Is that right?
+
+PROSPECT: Yes. Plus two joint ventures we don't fully own, and a holding company in between that complicates things.
+
+REP: And the immediate need is planning: a group budget and a rolling forecast that rolls up the entities.
+
+PROSPECT: That's the immediate need, yes. But I want to understand the limits before we go further.
+
+REP: That's sensible. What would you want to test first?
+
+PROSPECT: We own sixty percent of two of the joint ventures, so I need to know whether you can handle the minority interest properly.
+
+REP: Thank you for being specific. Can you tell me where minority interest shows up for you today?
+
+PROSPECT: In the statutory accounts, obviously. But also in the management view, because the board wants to see the group result after minority interest, not before.
+
+REP: Okay. And you mentioned last time that you run the statutory consolidation in a dedicated close tool.
+
+PROSPECT: We do. And that's the second question. Ideally this would replace the tool we use for our statutory consolidation, because running two systems at month end is what we're trying to get away from.
+
+REP: I'll be direct with you, because it's better you hear it now. We consolidate entities for planning and management reporting, including currency translation and standard intercompany eliminations. We're not built for statutory consolidation with partial ownership, minority interest and several accounting standards. I wouldn't recommend replacing your close tool with us.
+
+PROSPECT: I appreciate that. Most vendors tell me yes and then I find out during implementation.
+
+REP: What we usually see work is keeping the close tool for statutory reporting and loading its consolidated actuals into planning. Your forecast then starts from the same numbers the auditors see.
+
+PROSPECT: And the minority interest in the management view?
+
+REP: If the close tool produces it, we load it as part of the actuals. For the forecast, we'd need to look at how you calculate it today before I say whether a simple allocation in the plan is enough. I don't want to promise that on this call.
+
+PROSPECT: Fair. It's a fixed percentage on both ventures, so it might be simple. Or it might not.
+
+REP: Then here's what I'd suggest. A working session with one of our solutions consultants to map your entity structure, and agree which parts stay in the close tool and which move to planning. If you still want to go further after that, we can scope a proof of concept on your real entity structure before any commitment.
+
+PROSPECT: That's reasonable. I'd bring Anil, who runs the consolidation, and our group FP&A lead.
+
+REP: Perfect. After the close would be best, I assume.
+
+PROSPECT: Yes. The week after next. And send me the list of what you need from us beforehand. I don't want to spend the session explaining the org chart.
+
+REP: I'll send an entity template you can fill in, with ownership percentages, currencies and reporting standard per entity.
+
+PROSPECT: Good. Thanks for being straight about the consolidation.
+
+REP: Of course. Good luck with the close.

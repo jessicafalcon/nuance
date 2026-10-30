@@ -1,0 +1,63 @@
+REP: Good morning, Helen. Thanks for setting aside the time.
+
+PROSPECT: Morning. I've asked Tomas from my team to sit in. He does most of the reporting.
+
+REP: Hi Tomas, nice to meet you.
+
+PROSPECT: He says hello. He's on mute because of the construction outside.
+
+REP: No problem. Last time we covered how Pellworth Logistics runs its forecast. Today I'd like to focus on reporting, since that's where you said most of the hours go.
+
+PROSPECT: It is. The forecast itself isn't the problem. It's everything after.
+
+REP: Walk me through a typical month.
+
+PROSPECT: We close around the fifth working day. Then Tomas pulls actuals and forecast into a workbook, builds the management pack, and we send it to the leadership team around the twelfth. Quarterly, the board pack goes out with more detail.
+
+REP: And the management pack is built in Excel today.
+
+PROSPECT: Yes, all of it. The charts, the commentary boxes, the variance tables.
+
+REP: In the demo you saw the report templates, with the variance tables and commentary built in. Did those look close to what you need?
+
+PROSPECT: Close for the management pack, maybe. For the board, no. I'll be blunt about it.
+
+REP: Please do.
+
+PROSPECT: Every quarter my team exports everything to Excel to format the board pack, and I can't see that changing.
+
+REP: That's useful to hear, and I'd rather be honest than oversell. Spreadsheets stay part of most finance workflows, including for teams that use us. What's specific about the board pack?
+
+PROSPECT: The chair has very particular views on layout. Certain charts on certain pages, a specific colour for anything over budget. We redo it every time she changes her mind.
+
+REP: Then I'd expect the board pack to stay in Excel, at least the final formatting. Where we can help is the step before: the spreadsheet add-in refreshes the numbers in your workbook directly from the plan, so Tomas isn't copying and pasting. When the chair changes the layout, the numbers stay connected.
+
+PROSPECT: That's the first half of it. The other half worries me more.
+
+REP: Go on.
+
+PROSPECT: And when the regional controllers edit numbers in their own sheets, getting those changes back in is where it always breaks.
+
+REP: Tell me how that works today.
+
+PROSPECT: Each region gets a copy of the forecast. They change a few lines, sometimes add rows, and send it back. Tomas compares the files by eye and types the changes in. Last quarter we missed a change in the northern region and the forecast was off by two hundred thousand for a week.
+
+REP: That's painful. The add-in also supports write-back, so a controller can change an approved input range in their sheet and send it into the plan, with a record of who changed what. It won't accept rows added outside the defined range, which is usually what breaks things.
+
+PROSPECT: That might help. Adding rows is half our problem, if I'm honest.
+
+REP: Then I'd rather test it on your real files than describe it. Would you be open to a short working session where we rebuild one of your current reports, say the regional forecast sheet, and show where the add-in fits and where it doesn't?
+
+PROSPECT: Yes. Tomas would want to bring the northern region's file, since that's the messy one.
+
+REP: Perfect. We'd ask you to remove anything sensitive before sharing, or we can work on a copy with the numbers changed.
+
+PROSPECT: We'll change the numbers. When?
+
+REP: Next Wednesday or Thursday, about an hour. I'll send times.
+
+PROSPECT: Thursday is better. The close is still running on Wednesday.
+
+REP: Thursday it is. Thanks, Helen, and thanks Tomas.
+
+PROSPECT: Thanks. Speak Thursday.
